@@ -9,13 +9,22 @@
 import SwiftUI
 
 struct SpotifyView: View {
-    
-    
-    
+    @State private var playlists = [Playlist]()
     
     var body: some View {
-            Text("Spotify")
-        
+        NavigationView {
+            List(playlists) { playlist in
+                NavigationLink(destination: TrackListView(id: playlist.id, name: playlist.name)) {
+                    Text(playlist.name)
+                }
+                
+            }.navigationBarTitle("Playlists")
+            .onAppear {
+                SpotifyManager.shared.getUserPlaylists(completion: { playlists in
+                    self.playlists = playlists
+                })
+            }
+        }
         
     }
 }

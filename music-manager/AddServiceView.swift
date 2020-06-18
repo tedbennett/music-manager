@@ -89,13 +89,12 @@ class EmbeddedWebviewController: UIViewController, WKNavigationDelegate {
             if let fragment = url.fragment {
                 var components = URLComponents()
                 components.query = fragment
-                
                 for item in components.queryItems! {
                     if item.name == "access_token" {
                         self.delegate?.finishAuth(sender: self.webview, code: item.value!)
                     }
                 }
-
+                
                 
             }
         }
