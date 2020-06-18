@@ -9,8 +9,24 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State var spotifyConnected = SpotifyManager.shared.authToken != nil
     var body: some View {
-        Text("Hello, World!")
+        TabView {
+            if spotifyConnected {
+                SpotifyView().tabItem {
+                    Text("Spotify")
+                    Image(uiImage: UIImage(named: "spotify")!)
+                }
+            }
+            PlaylistsView().tabItem {
+                Text("Apple")
+                Image(uiImage: UIImage(named: "apple")!)
+            }
+            AddServiceView(spotifyConnected: $spotifyConnected).tabItem {
+                Text("Add Service")
+                Image(systemName: "plus")
+            }
+        }
     }
 }
 
