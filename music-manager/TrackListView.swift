@@ -10,6 +10,7 @@ import SwiftUI
 
 struct TrackListView: View {
     @State var tracks = [Track]()
+    
     var id: String
     var name: String
     var body: some View {

@@ -15,7 +15,10 @@ struct SpotifyView: View {
         NavigationView {
             List(playlists) { playlist in
                 NavigationLink(destination: TrackListView(id: playlist.id, name: playlist.name)) {
-                    Text(playlist.name)
+                    VStack(alignment: .leading){
+                        Text(playlist.name).font(.headline)
+                        Text("\(playlist.trackCount) songs").font(.subheadline)
+                    }
                 }
                 
             }.navigationBarTitle("Playlists")
