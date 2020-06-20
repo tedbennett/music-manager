@@ -11,8 +11,7 @@ import Foundation
 class SpotifyManager {
     var baseURL = "https://api.spotify.com/v1/"
     var baseAuthURL = "https://accounts.spotify.com/authorize"
-    var clientID = Environment.clientID
-    var secretID = Environment.secretID
+    var clientID = Environment.Spotify.clientID
     var responseType = "token"
     var redirectURL = "https://www.tedbennett.co.uk/"
     var scope = "user-read-private%20user-read-email"
@@ -40,6 +39,8 @@ class SpotifyManager {
                 for case let result in json["items"] as! [[String: Any]] {
                     if let playlist = try? Playlist(json: result) {
                         playlists.append(playlist)
+                        
+                        
                     }
                 }
             }
@@ -54,6 +55,7 @@ class SpotifyManager {
             return
         }
         guard let url = URL(string: baseURL + "playlists/" + id + "/tracks") else { return }
+        
         var request = URLRequest(url: url)
         request.setValue("Bearer " + authToken!, forHTTPHeaderField: "Authorization")
         
@@ -84,9 +86,10 @@ class SpotifyManager {
 struct Playlist: Codable, Identifiable {
     var id: String
     var name: String
-    var imageURL: String
-    var trackCount: Int
-    //var tracks: [Track]
+    var imageURL: String?
+    var trackCount: Int?
+    var href: String?
+    var tracks: [Track]
 }
 
 struct Track: Codable, Identifiable {
@@ -119,8 +122,13 @@ extension Playlist {
         guard let id = json["id"] as? String
             else { throw SerializationError.missing("id") }
         
+        
+        
         guard let name = json["name"] as? String
             else { throw SerializationError.missing("name") }
+        
+        guard let href = json["href"] as? String
+            else { throw SerializationError.missing("href") }
         
         guard let imagesJSON = json["images"] as? [[String:Any]]
             else { throw SerializationError.missing("images") }
@@ -144,6 +152,7 @@ extension Playlist {
     
         self.name = name
         self.id = id
+        self.href = href
         self.imageURL = imageURL!
         self.trackCount = trackCount
     }

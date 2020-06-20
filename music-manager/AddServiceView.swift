@@ -12,6 +12,7 @@ import WebKit
 struct AddServiceView: View {
     @State private var logInToSpotify = false
     @Binding var spotifyConnected: Bool
+    @Binding var appleMusicConnected: Bool
     var body: some View {
         VStack {
             if !spotifyConnected {
@@ -24,9 +25,18 @@ struct AddServiceView: View {
                     Webview(closeWindow: self.$logInToSpotify, spotifyConnected: self.$spotifyConnected )
                 }
             }
-            Spacer()
-            Button(action: /*@START_MENU_TOKEN@*/{}/*@END_MENU_TOKEN@*/) {
-                Text("Log In to Apple Music")
+            if !appleMusicConnected {
+                Spacer()
+                Button(action: {
+                    AppleMusicManager.shared.getAppleMusicAuth() { userToken, _ in
+                        if userToken != nil {
+                            self.appleMusicConnected = true
+                        }
+                    }
+                    
+                }) {
+                    Text("Log In to Apple Music")
+                }
             }
             Spacer()
         }
