@@ -13,6 +13,7 @@ struct AddServiceView: View {
     @State private var logInToSpotify = false
     @Binding var spotifyConnected: Bool
     @Binding var appleMusicConnected: Bool
+    @State var failedToConnect = false
     var body: some View {
         VStack {
             if !spotifyConnected {
@@ -31,11 +32,15 @@ struct AddServiceView: View {
                     AppleMusicManager.shared.getAppleMusicAuth() { userToken, _ in
                         if userToken != nil {
                             self.appleMusicConnected = true
+                        } else {
+                            self.failedToConnect = true
                         }
                     }
                     
                 }) {
                     Text("Log In to Apple Music")
+                }.alert(isPresented: self.$failedToConnect) {
+                Alert(title: Text("Unknown Error"), message: Text("Failed to connect to Apple Music"), dismissButton: .default(Text("OK")))
                 }
             }
             Spacer()

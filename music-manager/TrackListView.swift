@@ -20,6 +20,9 @@ struct TrackListView<ServiceManager: Manager>: View {
             List(playlist.tracks) { track in
                 Text(track.name)
             }.navigationBarTitle(playlist.name)
+                .navigationBarItems(trailing: NavigationLink(destination: TransferView(playlist: self.playlist, manager: self.manager), label: {
+                    Text("Transfer")
+                }))
                 .onAppear {
                     self.manager.getPlaylistTracks(id: self.playlist.id, completion: { tracks in
                         self.playlist.tracks = tracks

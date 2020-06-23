@@ -13,6 +13,10 @@ struct ContentView: View {
     @State var appleMusicConnected = AppleMusicManager.shared.userToken != nil
     var body: some View {
         TabView {
+            ConvertView().tabItem {
+                Text("Convert")
+                Image(systemName: "arrow.right.arrow.left")
+            }
             if spotifyConnected {
                 PlaylistsView<SpotifyManager>(manager: SpotifyManager.shared).tabItem {
                     Text("Spotify")
@@ -25,9 +29,11 @@ struct ContentView: View {
                     Image(uiImage: UIImage(named: "apple")!)
                 }
             }
-            AddServiceView(spotifyConnected: $spotifyConnected, appleMusicConnected: $appleMusicConnected).tabItem {
-                Text("Add Service")
-                Image(systemName: "plus")
+            if !spotifyConnected || !appleMusicConnected {
+                AddServiceView(spotifyConnected: $spotifyConnected, appleMusicConnected: $appleMusicConnected).tabItem {
+                    Text("Add Service")
+                    Image(systemName: "plus")
+                }
             }
         }
     }
