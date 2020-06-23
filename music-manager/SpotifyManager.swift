@@ -8,7 +8,13 @@
 
 import Foundation
 
-class SpotifyManager {
+protocol Manager {
+    func getUserPlaylists(completion: @escaping ([Playlist]) -> ())
+    func getPlaylistTracks(id: String, completion: @escaping ([Track]) -> ())
+}
+
+class SpotifyManager: Manager {
+    
     var baseURL = "https://api.spotify.com/v1/"
     var baseAuthURL = "https://accounts.spotify.com/authorize"
     var clientID = Environment.Spotify.clientID
@@ -37,7 +43,7 @@ class SpotifyManager {
             if let data = data,
                 let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
                 for case let result in json["items"] as! [[String: Any]] {
-                    if let playlist = try? Playlist(json: result) {
+                    if let playlist = try? Playlist(fromSpotify: result) {
                         playlists.append(playlist)
                         
                         
@@ -60,16 +66,16 @@ class SpotifyManager {
         request.setValue("Bearer " + authToken!, forHTTPHeaderField: "Authorization")
         
         URLSession.shared.dataTask(with: request) { (data, _, _) in
-//            let jsonResult = try! JSONSerialization.jsonObject(with: data!, options: JSONSerialization.ReadingOptions.mutableContainers)
-//
-//            print(jsonResult)
+            //            let jsonResult = try! JSONSerialization.jsonObject(with: data!, options: JSONSerialization.ReadingOptions.mutableContainers)
+            //
+            //            print(jsonResult)
             
             var tracks = [Track]()
             
             if let data = data,
                 let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
                 for case let result in json["items"] as! [[String: Any]] {
-                    if let track = try? Track(json: result) {
+                    if let track = try? Track(fromSpotify: result) {
                         tracks.append(track)
                     }
                 }
@@ -80,19 +86,26 @@ class SpotifyManager {
             }
         }.resume()
     }
-
+    
 }
 
-struct Playlist: Codable, Identifiable {
+class Playlist: ObservableObject, Identifiable {
     var id: String
     var name: String
     var imageURL: String?
-    var trackCount: Int?
     var href: String?
-    var tracks: [Track]
+    @Published var tracks: [Track]
+    
+    init(id: String, name: String, imageURL: String? = nil, href: String? = nil, tracks: [Track] = []) {
+        self.id = id
+        self.name = name
+        self.imageURL = imageURL
+        self.href = href
+        self.tracks = tracks
+    }
 }
 
-struct Track: Codable, Identifiable {
+struct Track: Identifiable {
     var local: Bool
     var id: String
     var artists: [Artist]
@@ -102,13 +115,13 @@ struct Track: Codable, Identifiable {
 }
 
 
-struct Artist: Codable {
+struct Artist {
     var name: String
 }
 
-struct Album: Codable {
+struct Album {
     var name: String
-    //var imageURL: String
+    var imageURL: String?
 }
 
 enum SerializationError: Error {
@@ -118,11 +131,9 @@ enum SerializationError: Error {
 
 
 extension Playlist {
-    init(json: [String: Any]) throws {
+    convenience init(fromSpotify json: [String: Any]) throws {
         guard let id = json["id"] as? String
             else { throw SerializationError.missing("id") }
-        
-        
         
         guard let name = json["name"] as? String
             else { throw SerializationError.missing("name") }
@@ -132,12 +143,6 @@ extension Playlist {
         
         guard let imagesJSON = json["images"] as? [[String:Any]]
             else { throw SerializationError.missing("images") }
-        
-        guard let tracksJSON = json["tracks"] as? [String: Any]
-            else { throw SerializationError.missing("tracks") }
-        guard let trackCount = tracksJSON["total"] as? Int
-            else { throw SerializationError.missing("tracksCount") }
-
         
         var imageURL: String?
         for image in imagesJSON {
@@ -149,17 +154,12 @@ extension Playlist {
         if imageURL == nil {
             throw SerializationError.missing("imageURL")
         }
-    
-        self.name = name
-        self.id = id
-        self.href = href
-        self.imageURL = imageURL!
-        self.trackCount = trackCount
+        self.init(id: id, name: name, imageURL: imageURL!, href: href)
     }
 }
 
 extension Track {
-    init(json: [String: Any]) throws {
+    init(fromSpotify json: [String: Any]) throws {
         guard let local = json["is_local"] as? Bool
             else { throw SerializationError.missing("is_local") }
         
@@ -198,14 +198,13 @@ extension Track {
         self.local = local
         self.artists = artists
         self.album = album
-        
     }
 }
 
 extension Artist {
     init(json: [String: Any]) throws {
         guard let name = json["name"] as? String
-        else { throw SerializationError.missing("name") }
+            else { throw SerializationError.missing("name") }
         self.name = name
     }
 }

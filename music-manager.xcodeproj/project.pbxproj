@@ -8,8 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		9F0DEA97249BD81C00FB8599 /* environment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0DEA96249BD81C00FB8599 /* environment.swift */; };
-		9F0DEA99249BDB4A00FB8599 /* SpotifyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0DEA98249BDB4A00FB8599 /* SpotifyView.swift */; };
-		9F47E155249D179D007572FC /* AppleMusicView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F47E154249D179D007572FC /* AppleMusicView.swift */; };
 		9FAAAEE2249BC5570083C1D7 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FAAAEE1249BC5570083C1D7 /* AppDelegate.swift */; };
 		9FAAAEE4249BC5570083C1D7 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FAAAEE3249BC5570083C1D7 /* SceneDelegate.swift */; };
 		9FAAAEE6249BC5570083C1D7 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FAAAEE5249BC5570083C1D7 /* ContentView.swift */; };
@@ -25,8 +23,6 @@
 
 /* Begin PBXFileReference section */
 		9F0DEA96249BD81C00FB8599 /* environment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = environment.swift; sourceTree = "<group>"; };
-		9F0DEA98249BDB4A00FB8599 /* SpotifyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyView.swift; sourceTree = "<group>"; };
-		9F47E154249D179D007572FC /* AppleMusicView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleMusicView.swift; sourceTree = "<group>"; };
 		9FAAAEDE249BC5570083C1D7 /* music-manager.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "music-manager.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		9FAAAEE1249BC5570083C1D7 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		9FAAAEE3249BC5570083C1D7 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -72,7 +68,6 @@
 		9FAAAEE0249BC5570083C1D7 /* music-manager */ = {
 			isa = PBXGroup;
 			children = (
-				9F47E154249D179D007572FC /* AppleMusicView.swift */,
 				9FC96156249D00A600FC823D /* AppleMusicManager.swift */,
 				9FE8FE9F249BF36C00381953 /* TrackListView.swift */,
 				9FAAAEF5249BC58D0083C1D7 /* AddServiceView.swift */,
@@ -80,7 +75,6 @@
 				9FAAAEE3249BC5570083C1D7 /* SceneDelegate.swift */,
 				9FAAAEE5249BC5570083C1D7 /* ContentView.swift */,
 				9FAAAEF9249BC6360083C1D7 /* SpotifyManager.swift */,
-				9F0DEA98249BDB4A00FB8599 /* SpotifyView.swift */,
 				9F0DEA96249BD81C00FB8599 /* environment.swift */,
 				9FAAAEF7249BC5CD0083C1D7 /* PlaylistsView.swift */,
 				9FAAAEE7249BC55D0083C1D7 /* Assets.xcassets */,
@@ -174,10 +168,8 @@
 				9FAAAEF8249BC5CD0083C1D7 /* PlaylistsView.swift in Sources */,
 				9FC96157249D00A600FC823D /* AppleMusicManager.swift in Sources */,
 				9FAAAEF6249BC58D0083C1D7 /* AddServiceView.swift in Sources */,
-				9F47E155249D179D007572FC /* AppleMusicView.swift in Sources */,
 				9FAAAEE2249BC5570083C1D7 /* AppDelegate.swift in Sources */,
 				9FAAAEE4249BC5570083C1D7 /* SceneDelegate.swift in Sources */,
-				9F0DEA99249BDB4A00FB8599 /* SpotifyView.swift in Sources */,
 				9F0DEA97249BD81C00FB8599 /* environment.swift in Sources */,
 				9FE8FEA0249BF36C00381953 /* TrackListView.swift in Sources */,
 				9FAAAEE6249BC5570083C1D7 /* ContentView.swift in Sources */,

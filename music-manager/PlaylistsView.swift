@@ -8,14 +8,32 @@
 
 import SwiftUI
 
-struct PlaylistsView: View {
+struct PlaylistsView<ServiceManager: Manager>: View {
+    var manager: ServiceManager
+    @State var playlists = [Playlist]()
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        NavigationView {
+            List(self.playlists) { playlist in
+                NavigationLink(destination: TrackListView<ServiceManager>(playlist: playlist, manager: self.manager)) {
+                    Text(playlist.name).font(.headline)
+                }
+                
+            }.navigationBarTitle("Playlists")
+                .onAppear {
+                    if self.playlists.isEmpty {
+                        self.manager.getUserPlaylists(completion: { playlists in
+                            self.playlists = playlists
+                        })
+                    }
+            }
+        }
     }
 }
 
-struct PlaylistsView_Previews: PreviewProvider {
-    static var previews: some View {
-        PlaylistsView()
-    }
-}
+//struct PlaylistsView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        PlaylistsView()
+//    }
+//}
+

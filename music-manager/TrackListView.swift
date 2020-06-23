@@ -8,20 +8,24 @@
 
 import SwiftUI
 
-struct TrackListView: View {
-    @State var tracks = [Track]()
+struct TrackListView<ServiceManager: Manager>: View {
+    @ObservedObject var playlist: Playlist
+    var manager: ServiceManager
     
-    var id: String
-    var name: String
     var body: some View {
-        List(tracks) { track in
-            Text(track.name)
-        }.onAppear {
-            SpotifyManager.shared.getPlaylistTracks(id: self.id, completion: { tracks in
-                self.tracks = tracks
-            })
-        }.navigationBarTitle(name)
-        
+        VStack {
+            if !playlist.tracks.isEmpty {
+                Text("\(playlist.tracks.count) tracks").font(.subheadline)
+            }
+            List(playlist.tracks) { track in
+                Text(track.name)
+            }.navigationBarTitle(playlist.name)
+                .onAppear {
+                    self.manager.getPlaylistTracks(id: self.playlist.id, completion: { tracks in
+                        self.playlist.tracks = tracks
+                    })
+            }
+        }
     }
 }
 
