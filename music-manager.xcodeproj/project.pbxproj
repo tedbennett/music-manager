@@ -3,12 +3,14 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 52;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		9F0DEA97249BD81C00FB8599 /* environment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0DEA96249BD81C00FB8599 /* environment.swift */; };
 		9F615E8C24A3411B00F21344 /* AsyncImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F615E8B24A3411B00F21344 /* AsyncImage.swift */; };
+		9F615E8F24A3DF0A00F21344 /* OAuthSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 9F615E8E24A3DF0A00F21344 /* OAuthSwift */; };
+		9F615E9224A3FB4F00F21344 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 9F615E9124A3FB4F00F21344 /* Alamofire */; };
 		9FAA4B2424A2052200B1124F /* TransferView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FAA4B2324A2052200B1124F /* TransferView.swift */; };
 		9FAA4B2624A2378C00B1124F /* ConvertView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FAA4B2524A2378C00B1124F /* ConvertView.swift */; };
 		9FAA4B2824A262B700B1124F /* MusicTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FAA4B2724A262B700B1124F /* MusicTypes.swift */; };
@@ -51,6 +53,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9F615E8F24A3DF0A00F21344 /* OAuthSwift in Frameworks */,
+				9F615E9224A3FB4F00F21344 /* Alamofire in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -121,6 +125,10 @@
 			dependencies = (
 			);
 			name = "music-manager";
+			packageProductDependencies = (
+				9F615E8E24A3DF0A00F21344 /* OAuthSwift */,
+				9F615E9124A3FB4F00F21344 /* Alamofire */,
+			);
 			productName = "music-manager";
 			productReference = 9FAAAEDE249BC5570083C1D7 /* music-manager.app */;
 			productType = "com.apple.product-type.application";
@@ -149,6 +157,10 @@
 				Base,
 			);
 			mainGroup = 9FAAAED5249BC5570083C1D7;
+			packageReferences = (
+				9F615E8D24A3DF0A00F21344 /* XCRemoteSwiftPackageReference "OAuthSwift" */,
+				9F615E9024A3FB4F00F21344 /* XCRemoteSwiftPackageReference "Alamofire" */,
+			);
 			productRefGroup = 9FAAAEDF249BC5570083C1D7 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -382,6 +394,38 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		9F615E8D24A3DF0A00F21344 /* XCRemoteSwiftPackageReference "OAuthSwift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/OAuthSwift/OAuthSwift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.1.2;
+			};
+		};
+		9F615E9024A3FB4F00F21344 /* XCRemoteSwiftPackageReference "Alamofire" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Alamofire/Alamofire.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.2.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		9F615E8E24A3DF0A00F21344 /* OAuthSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9F615E8D24A3DF0A00F21344 /* XCRemoteSwiftPackageReference "OAuthSwift" */;
+			productName = OAuthSwift;
+		};
+		9F615E9124A3FB4F00F21344 /* Alamofire */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9F615E9024A3FB4F00F21344 /* XCRemoteSwiftPackageReference "Alamofire" */;
+			productName = Alamofire;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 9FAAAED6249BC5570083C1D7 /* Project object */;
 }
