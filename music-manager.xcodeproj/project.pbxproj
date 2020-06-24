@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		9F0DEA97249BD81C00FB8599 /* environment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0DEA96249BD81C00FB8599 /* environment.swift */; };
+		9F615E8C24A3411B00F21344 /* AsyncImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F615E8B24A3411B00F21344 /* AsyncImage.swift */; };
 		9FAA4B2424A2052200B1124F /* TransferView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FAA4B2324A2052200B1124F /* TransferView.swift */; };
 		9FAA4B2624A2378C00B1124F /* ConvertView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FAA4B2524A2378C00B1124F /* ConvertView.swift */; };
 		9FAA4B2824A262B700B1124F /* MusicTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FAA4B2724A262B700B1124F /* MusicTypes.swift */; };
@@ -26,6 +27,7 @@
 
 /* Begin PBXFileReference section */
 		9F0DEA96249BD81C00FB8599 /* environment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = environment.swift; sourceTree = "<group>"; };
+		9F615E8B24A3411B00F21344 /* AsyncImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncImage.swift; sourceTree = "<group>"; };
 		9FAA4B2324A2052200B1124F /* TransferView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferView.swift; sourceTree = "<group>"; };
 		9FAA4B2524A2378C00B1124F /* ConvertView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConvertView.swift; sourceTree = "<group>"; };
 		9FAA4B2724A262B700B1124F /* MusicTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicTypes.swift; sourceTree = "<group>"; };
@@ -74,6 +76,7 @@
 		9FAAAEE0249BC5570083C1D7 /* music-manager */ = {
 			isa = PBXGroup;
 			children = (
+				9F615E8B24A3411B00F21344 /* AsyncImage.swift */,
 				9FAA4B2724A262B700B1124F /* MusicTypes.swift */,
 				9FAA4B2524A2378C00B1124F /* ConvertView.swift */,
 				9FAA4B2324A2052200B1124F /* TransferView.swift */,
@@ -184,6 +187,7 @@
 				9FAA4B2624A2378C00B1124F /* ConvertView.swift in Sources */,
 				9F0DEA97249BD81C00FB8599 /* environment.swift in Sources */,
 				9FE8FEA0249BF36C00381953 /* TrackListView.swift in Sources */,
+				9F615E8C24A3411B00F21344 /* AsyncImage.swift in Sources */,
 				9FAAAEE6249BC5570083C1D7 /* ContentView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

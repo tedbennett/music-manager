@@ -113,23 +113,34 @@ class SpotifyManager: Manager {
         }.resume()
     }
     
-    func getTracksFromIsrcID(isrcs: [String], completion: @escaping (([Track]) -> ())) {
+    func getTracksFromIsrcID(isrcs: [String], completion: @escaping (([Track?]) -> ())) {
         if authToken == nil {
             return
         }
+        var tracks = [Track?]()
         for isrc in isrcs {
             
-            guard let url = URL(string: baseURL + "search?q=isrc:\(isrc)&type=track") else { return }
+            guard var url = URLComponents(string: baseURL + "search") else { return }
             
-            var request = URLRequest(url: url)
+            url.queryItems = [URLQueryItem(name: "q", value: "isrc:\(isrc)"), URLQueryItem(name: "type", value: "track"), URLQueryItem(name: "limit", value: "1")]
+            var request = URLRequest(url: url.url!)
             request.setValue("Bearer " + authToken!, forHTTPHeaderField: "Authorization")
             
             URLSession.shared.dataTask(with: request) { (data, _, _) in
                 if let data = data,
                     let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+                    let tracksJSON = json["tracks"] as! [String: Any]
+                    
+                    let items = tracksJSON["items"] as! [[String:Any]]
+                    let track = try? Track(fromSpotify: items[0])
+                    tracks.append(track)
                     
                 }
-            }
+                DispatchQueue.main.async {
+                    completion(tracks)
+                }
+            }.resume()
+            
         }
     }
     
@@ -147,10 +158,12 @@ extension Playlist {
         guard let imagesJSON = json["images"] as? [[String:Any]]
             else { throw SerializationError.missing("images") }
         
-        var imageURL: String?
+        var imageURL: URL?
         for image in imagesJSON {
             if image["height"] as? Int == 640 {
-                imageURL = image["url"] as? String
+                if let urlString = image["url"] as? String {
+                    imageURL = URL(string: urlString)
+                }
             }
         }
         
@@ -168,7 +181,10 @@ extension Track {
         
         guard let externalUrls = json["external_urls"] as? [String:Any]
             else { throw SerializationError.missing("external_urls") }
-        let url = externalUrls["spotify"] as? String
+        var url: URL?
+        if let urlString = externalUrls["spotify"] as? String {
+            url = URL(string: urlString)
+        }
         
         guard let name = json["name"] as? String
             else { throw SerializationError.missing("name") }
@@ -182,10 +198,12 @@ extension Track {
             else { throw SerializationError.missing("album") }
         
         
-        var imageURL: String?
+        var imageURL: URL?
         for image in imagesJSON {
             if image["height"] as? Int == 640 {
-                imageURL = image["url"] as? String
+                if let imageUrlString = image["url"] as? String {
+                    imageURL = URL(string: imageUrlString)
+                }
             }
         }
         
@@ -195,21 +213,13 @@ extension Track {
             else { throw SerializationError.missing("isrc") }
         
         
-        var artists = [Artist]()
-        for artistJSON in artistsJSON {
-            if let artist = try? Artist(json: artistJSON) {
-                artists.append(artist)
+        var artists = [String]()
+        for artist in artistsJSON {
+            if let artistName = artist["name"] as? String {
+                artists.append(artistName)
             }
         }
-        self.init(id: id ?? UUID().uuidString, name: name, url: url, local: false, artists: artists, album: Album(name: albumName, imageURL: imageURL), isrcID: isrcID)
-    }
-}
-
-extension Artist {
-    init(json: [String: Any]) throws {
-        guard let name = json["name"] as? String
-            else { throw SerializationError.missing("name") }
-        self.name = name
+        self.init(id: id ?? UUID().uuidString, name: name, url: url, local: false, artists: artists, album: albumName, imageURL: imageURL, isrcID: isrcID)
     }
 }
 

@@ -173,7 +173,7 @@ class AppleMusicManager: Manager {
         }.resume()
     }
     
-    func getTracksFromIsrcID(isrcs: [String], completion: @escaping ([Track]) -> ()) {
+    func getTracksFromIsrcID(isrcs: [String], completion: @escaping ([Track?]) -> ()) {
         if userToken == nil || storefront == nil {
             return
         }
@@ -184,9 +184,8 @@ class AppleMusicManager: Manager {
         var request = URLRequest(url: url.url!)
         request.setValue("Bearer " + developerToken, forHTTPHeaderField: "Authorization")
         request.setValue(userToken!, forHTTPHeaderField: "Music-User-Token")
-        
         var isrcIDs = isrcs
-        var tracks = [Track]()
+        var tracks = [Track?]()
         URLSession.shared.dataTask(with: request) { (data, urlResponse, error) in
             if let data = data,
                 let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
@@ -197,13 +196,17 @@ class AppleMusicManager: Manager {
                             isrcIDs.removeAll(where: {
                                 isrc in isrc == track.isrcID
                             })
+                        } else {
+                            tracks.append(nil)
                         }
                     }
                 }
                 
             }
             DispatchQueue.main.async {
+                
                 completion(tracks)
+                
             }
         }.resume()
         
@@ -223,7 +226,20 @@ extension Playlist {
         guard let name = attributes["name"] as? String
             else { throw SerializationError.missing("name") }
         
-        self.init(id: id, name: name)
+        var albumUrl: URL?
+        if let artwork = attributes["artwork"] as? [String: Any] {
+            
+            guard let imageURLTemplate = artwork["url"] as? String
+                else { throw SerializationError.missing("imageURL") }
+            
+            let albumUrlString = imageURLTemplate.replacingOccurrences(of: "{w}", with: "640")
+                .replacingOccurrences(of: "{h}", with: "640")
+            
+            albumUrl = URL(string: albumUrlString)
+        }
+        
+        
+        self.init(id: id, name: name, imageURL: albumUrl)
     }
 }
 
@@ -237,8 +253,10 @@ extension Track {
         guard let trackAttributes = json["attributes"] as? [String: Any]
             else { throw SerializationError.missing("trackAttributes") }
         
-        guard let url = trackAttributes["url"] as? String
-            else { throw SerializationError.missing("url") }
+        var url: URL?
+        if let urlString = trackAttributes["url"] as? String {
+            url = URL(string: urlString)
+        }
         guard let artist = trackAttributes["artistName"] as? String
             else { throw SerializationError.missing("artistName") }
         guard let album = trackAttributes["albumName"] as? String
@@ -250,10 +268,16 @@ extension Track {
         guard let artwork = trackAttributes["artwork"] as? [String: Any]
             else { throw SerializationError.missing("artwork") }
         
-        guard let imageURL = artwork["url"] as? String
-            else { throw SerializationError.missing("imageURL") }
+        var imageURL: URL?
+        if let imageURLTemplate = artwork["url"] as? String {
+            let imageURLString = imageURLTemplate.replacingOccurrences(of: "{w}", with: "640")
+                .replacingOccurrences(of: "{h}", with: "640")
+            imageURL = URL(string: imageURLString)
+        }
         
-        self.init(id: id, name: name, url: url, local: false, artists: [Artist(name: artist)], album: Album(name: album, imageURL: imageURL), isrcID: isrc)
+        
+        
+        self.init(id: id, name: name, url: url, local: false, artists: [artist], album: album, imageURL: imageURL, isrcID: isrc)
         
     }
 }

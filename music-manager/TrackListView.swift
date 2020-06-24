@@ -9,8 +9,11 @@
 import SwiftUI
 
 struct TrackListView<ServiceManager: Manager>: View {
+    @SwiftUI.Environment(\.imageCache) var cache: ImageCache
+    
     @ObservedObject var playlist: Playlist
     var manager: ServiceManager
+    @State private var imagesFinishedLoading = false
     
     var body: some View {
         VStack {
@@ -18,15 +21,28 @@ struct TrackListView<ServiceManager: Manager>: View {
                 Text("\(playlist.tracks.count) tracks").font(.subheadline)
             }
             List(playlist.tracks) { track in
-                Text(track.name)
+                HStack {
+                    if track.imageURL != nil {
+                        AsyncImage(url: track.imageURL!, cache: self.cache, placeholder: Image(systemName: "ellipsis"), configuration: { $0.resizable() }).frame(width: 75, height: 75)
+                    }
+                    
+                    VStack(alignment: .leading) {
+                        Text(track.name)
+                        Text(track.artists[0]).font(.subheadline)
+                    }
+                }
+                
             }.navigationBarTitle(playlist.name)
                 .navigationBarItems(trailing: NavigationLink(destination: TransferView(playlist: self.playlist, manager: self.manager), label: {
                     Text("Transfer")
                 }))
                 .onAppear {
-                    self.manager.getPlaylistTracks(id: self.playlist.id, completion: { tracks in
-                        self.playlist.tracks = tracks
-                    })
+                    if self.playlist.tracks.isEmpty {
+                        self.manager.getPlaylistTracks(id: self.playlist.id, completion: { tracks in
+                            self.playlist.tracks = tracks
+                        })
+                        
+                    }
             }
         }
     }
