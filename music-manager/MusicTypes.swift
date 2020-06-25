@@ -14,6 +14,7 @@ protocol Manager {
     func getPlaylistTracks(id: String, completion: @escaping ([Track]) -> ())
     func getIsrcID(id: String, completion: @escaping (Track) -> ())
     func getTracksFromIsrcID(isrcs: [String], completion: @escaping ([Track?]) -> ())
+    func getSearchResults(for search: String, completion: @escaping ([Track]) -> ())
 }
 
 

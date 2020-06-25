@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct TrackListView<ServiceManager: Manager>: View {
-    @SwiftUI.Environment(\.imageCache) var cache: ImageCache
+    
     
     @ObservedObject var playlist: Playlist
     var manager: ServiceManager
@@ -21,17 +21,7 @@ struct TrackListView<ServiceManager: Manager>: View {
                 Text("\(playlist.tracks.count) tracks").font(.subheadline)
             }
             List(playlist.tracks) { track in
-                HStack {
-                    if track.imageURL != nil {
-                        AsyncImage(url: track.imageURL!, cache: self.cache, placeholder: Image(systemName: "ellipsis"), configuration: { $0.resizable() }).frame(width: 75, height: 75)
-                    }
-                    
-                    VStack(alignment: .leading) {
-                        Text(track.name)
-                        Text(track.artists[0]).font(.subheadline)
-                    }
-                }
-                
+                TrackView(track: track)
             }.navigationBarTitle(playlist.name)
                 .navigationBarItems(trailing: NavigationLink(destination: TransferView(playlist: self.playlist, manager: self.manager), label: {
                     Text("Transfer")
@@ -53,3 +43,20 @@ struct TrackListView<ServiceManager: Manager>: View {
 //        TrackListView()
 //    }
 //}
+
+struct TrackView: View {
+    @Environment(\.imageCache) var cache: ImageCache
+    @ObservedObject var track: Track
+    var body: some View {
+        HStack {
+            if track.imageURL != nil {
+                AsyncImage(url: track.imageURL!, cache: self.cache, placeholder: Image(systemName: "ellipsis"), configuration: { $0.resizable() }).frame(width: 75, height: 75)
+            }
+            
+            VStack(alignment: .leading) {
+                Text(track.name).bold().lineLimit(2).padding(.bottom, 5)
+                Text(track.artists[0]).font(.subheadline)
+            }
+        }
+    }
+}

@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct PlaylistsView<ServiceManager: Manager>: View {
-    @SwiftUI.Environment(\.imageCache) var cache: ImageCache
+    @Environment(\.imageCache) var cache: ImageCache
     
     var manager: ServiceManager
     @State var playlists = [Playlist]()
@@ -26,7 +26,7 @@ struct PlaylistsView<ServiceManager: Manager>: View {
                         } else {
                             Image(systemName: "camera").frame(width: 75, height: 75)
                         }
-                        Text(playlist.name).font(.headline)
+                        Text(playlist.name).font(.headline).lineLimit(2)
                     }
                 }
                 

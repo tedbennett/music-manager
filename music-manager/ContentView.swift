@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State var spotifyConnected = SpotifyManager.shared.authToken != nil
+    @State var spotifyConnected = false
     @State var appleMusicConnected = AppleMusicManager.shared.userToken != nil
     var body: some View {
         TabView {
@@ -35,6 +35,10 @@ struct ContentView: View {
                 Text("Convert")
                 Image(systemName: "arrow.right.arrow.left")
             }
+        }.onAppear {
+            SpotifyManager.shared.authorize(completion: { authorised in
+                self.spotifyConnected = authorised
+            })
         }
     }
 }

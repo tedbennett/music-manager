@@ -8,7 +8,7 @@
 
 import UIKit
 import SwiftUI
-import OAuthSwift
+import OAuth2
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
@@ -37,7 +37,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             return
         }
         if url.host == "oauth-callback" {
-            OAuthSwift.handle(url: url)
+            print(url)
+            SpotifyManager.shared.authClient.handleRedirectURL(url)
         }
     }
 

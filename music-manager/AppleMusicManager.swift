@@ -10,9 +10,9 @@ import Foundation
 import StoreKit
 
 class AppleMusicManager: Manager {
-    
+
     var baseURL = "https://api.music.apple.com/v1/"
-    var developerToken = Environment.AppleMusic.musicToken
+    var developerToken = AppleMusicEnvironment.musicToken
     var userToken: String?
     var storefront: String?
     
@@ -33,6 +33,7 @@ class AppleMusicManager: Manager {
                             if userToken != nil {
                                 self.getUserStorefront()
                             }
+                            
                         }
                     }
                 }
@@ -153,7 +154,7 @@ class AppleMusicManager: Manager {
         
         var request = URLRequest(url: url)
         request.setValue("Bearer " + developerToken, forHTTPHeaderField: "Authorization")
-        request.setValue(userToken!, forHTTPHeaderField: "Music-User-Token")
+        //request.setValue(userToken!, forHTTPHeaderField: "Music-User-Token")
         
         
         var track: Track?
@@ -174,16 +175,13 @@ class AppleMusicManager: Manager {
     }
     
     func getTracksFromIsrcID(isrcs: [String], completion: @escaping ([Track?]) -> ()) {
-        if userToken == nil || storefront == nil {
-            return
-        }
-        guard var url = URLComponents(string: baseURL + "catalog/\(storefront!)/songs") else { return }
+        guard var url = URLComponents(string: baseURL + "catalog/\(storefront ?? "us")/songs") else { return }
         
         url.queryItems = [URLQueryItem(name: "filter[isrc]", value: isrcs.joined(separator: ","))]
         
         var request = URLRequest(url: url.url!)
         request.setValue("Bearer " + developerToken, forHTTPHeaderField: "Authorization")
-        request.setValue(userToken!, forHTTPHeaderField: "Music-User-Token")
+        //request.setValue(userToken!, forHTTPHeaderField: "Music-User-Token")
         var isrcIDs = isrcs
         var tracks = [Track?]()
         URLSession.shared.dataTask(with: request) { (data, urlResponse, error) in
@@ -205,11 +203,42 @@ class AppleMusicManager: Manager {
             }
             DispatchQueue.main.async {
                 
-                completion(tracks)
+                completion(tracks.isEmpty ? [nil] : tracks)
                 
             }
         }.resume()
         
+    }
+    
+    func getSearchResults(for search: String, completion: @escaping ([Track]) -> ()) {
+        guard var url = URLComponents(string: baseURL + "catalog/\(storefront ?? "us")/search") else { return }
+        let escapedString = search.replacingOccurrences(of: " ", with: "+")
+        url.queryItems = [URLQueryItem(name: "term", value: escapedString), URLQueryItem(name: "types", value: "songs"), URLQueryItem(name: "limit", value: "5")]
+        if url.url == nil {
+            return
+        }
+        var request = URLRequest(url: url.url!)
+        
+        request.setValue("Bearer " + developerToken, forHTTPHeaderField: "Authorization")
+        //request.setValue(userToken!, forHTTPHeaderField: "Music-User-Token")
+        var tracks = [Track]()
+        URLSession.shared.dataTask(with: request) { (data, urlResponse, error) in
+            if let data = data,
+                let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+                if let results = json["results"] as? [String: Any] {
+                    let songsJSON = results["songs"] as! [String: Any]
+                    let songsData = songsJSON["data"] as! [[String:Any]]
+                    for data in songsData {
+                        if let track = try? Track(fromAppleMusic: data) {
+                            tracks.append(track)
+                        }
+                    }
+                }
+            }
+            DispatchQueue.main.async {
+                completion(tracks)
+            }
+        }.resume()
     }
 }
 

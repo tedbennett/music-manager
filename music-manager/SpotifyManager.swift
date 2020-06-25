@@ -7,142 +7,215 @@
 //
 
 import Foundation
+import OAuth2
+import Alamofire
 
 class SpotifyManager: Manager {
-    
-    var baseURL = "https://api.spotify.com/v1/"
-    var baseAuthURL = "https://accounts.spotify.com/authorize"
-    var clientID = Environment.Spotify.clientID
-    var responseType = "token"
-    var redirectURL = "https://www.tedbennett.co.uk/"
-    var scope = "user-read-private%20user-read-email"
-    var authURL : String { baseAuthURL + "?client_id=" + clientID + "&response_type=" + responseType + "&redirect_uri=" + redirectURL }
-    
-    var authToken: String?
+    var baseURL = URL(string: "https://api.spotify.com/v1")!
+    var searchURL = URL(string: "https://open.spotify.com/search")!
+
+    var authClient = OAuth2CodeGrant(settings: [
+        "client_id": "e164f018712e4c6ba906a595591ff010",
+        "authorize_uri": "https://accounts.spotify.com/authorize",
+        "token_uri": "https://accounts.spotify.com/api/token",
+        "redirect_uris": ["music-manager://oauth-callback/"],
+        "use_pkce": true,
+        "scope": "playlist-read-private%20playlist-modify-private",
+        "keychain": true,
+        ] as OAuth2JSON)
+
+    lazy var loader = OAuth2DataLoader(oauth2: authClient)
     
     static let shared = SpotifyManager()
     
     private init() {}
     
-    func getUserPlaylists(completion: @escaping ([Playlist]) -> ()) {
-        if authToken == nil {
-            return
-        }
-        guard let url = URL(string: baseURL + "me/playlists") else { return }
-        var request = URLRequest(url: url)
-        request.setValue("Bearer " + authToken!, forHTTPHeaderField: "Authorization")
+    func authorize(completion: @escaping (Bool) -> Void) {
         
-        URLSession.shared.dataTask(with: request) { (data, _, _) in
-            var playlists = [Playlist]()
+        authClient.authorize(callback: {authParameters, error in
+            if authParameters != nil {
+                completion(true)
+            }
+            else {
+                print("Authorization was canceled or went wrong: \(String(describing: error))")
+                // error will not be nil
+                if error?.description == "Refresh token revoked" {
+                    self.authClient.forgetTokens()
+                }
+                completion(false)
+            }
             
-            if let data = data,
-                let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                for case let result in json["items"] as! [[String: Any]] {
-                    if let playlist = try? Playlist(fromSpotify: result) {
-                        playlists.append(playlist)
-                        
-                        
+        })
+        
+    }
+    
+    func getUserPlaylists(completion: @escaping ([Playlist]) -> ()) {
+        let url = baseURL.appendingPathComponent("me/playlists")
+        
+        let request = authClient.request(forURL: url)
+        
+        self.loader = OAuth2DataLoader(oauth2: authClient)
+        loader.perform(request: request) { response in
+            do {
+                let dict = try response.responseJSON()
+                var playlists = [Playlist]()
+                DispatchQueue.main.async {
+                    print(dict)
+                    for case let result in dict["items"] as! [[String: Any]] {
+                        if let playlist = try? Playlist(fromSpotify: result) {
+                            playlists.append(playlist)
+                            
+                            
+                        }
                     }
+                    completion(playlists)
+                    // you have received `dict` JSON data!
                 }
             }
-            DispatchQueue.main.async {
-                completion(playlists)
+            catch let error {
+                DispatchQueue.main.async {
+                    print(error)
+                    // an error occurred
+                }
             }
-        }.resume()
+        }
     }
     
     func getPlaylistTracks(id: String, completion: @escaping ([Track]) -> ()) {
-        if authToken == nil {
-            return
-        }
-        guard let url = URL(string: baseURL + "playlists/" + id + "/tracks") else { return }
+        let url = baseURL.appendingPathComponent("playlists/\(id)/tracks")
         
-        var request = URLRequest(url: url)
-        request.setValue("Bearer " + authToken!, forHTTPHeaderField: "Authorization")
+        let request = authClient.request(forURL: url)
         
-        URLSession.shared.dataTask(with: request) { (data, _, _) in
-            //            let jsonResult = try! JSONSerialization.jsonObject(with: data!, options: JSONSerialization.ReadingOptions.mutableContainers)
-            //
-            //            print(jsonResult)
-            
-            var tracks = [Track]()
-            
-            if let data = data,
-                let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                for case let result in json["items"] as! [[String: Any]] {
-                    let local = result["is_local"] as! Bool
-                    
-                    let track = result["track"] as! [String:Any]
-                    
-                    if let track = try? Track(fromSpotify: track) {
-                        track.local = local
-                        tracks.append(track)
+        self.loader = OAuth2DataLoader(oauth2: authClient)
+        loader.perform(request: request) { response in
+            do {
+                let dict = try response.responseJSON()
+                var tracks = [Track]()
+                DispatchQueue.main.async {
+                    print(dict)
+                    for case let result in dict["items"] as! [[String: Any]] {
+                        let local = result["is_local"] as! Bool
+                        
+                        let track = result["track"] as! [String:Any]
+                        
+                        if let track = try? Track(fromSpotify: track) {
+                            track.local = local
+                            tracks.append(track)
+                        }
                     }
+                    completion(tracks)
+                    // you have received `dict` JSON data!
                 }
             }
-            
-            DispatchQueue.main.async {
-                completion(tracks)
+            catch let error {
+                DispatchQueue.main.async {
+                    print(error)
+                    // an error occurred
+                }
             }
-        }.resume()
+        }
     }
     
     func getIsrcID(id: String, completion: @escaping (Track) -> ()) {
-        if authToken == nil {
-            return
-        }
-        guard let url = URL(string: baseURL + "tracks/" + id) else { return }
+        let url = baseURL.appendingPathComponent("tracks/\(id)")
         
-        var request = URLRequest(url: url)
-        request.setValue("Bearer " + authToken!, forHTTPHeaderField: "Authorization")
+        let request = authClient.request(forURL: url)
         
-        URLSession.shared.dataTask(with: request) { (data, _, _) in
-            var track: Track?
-            
-            if let data = data,
-                let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                track = try? Track(fromSpotify: json)
-                
-            }
-            
-            DispatchQueue.main.async {
-                if track != nil {
-                    completion(track!)
+        self.loader = OAuth2DataLoader(oauth2: authClient)
+        loader.perform(request: request) { response in
+            do {
+                let dict = try response.responseJSON()
+                DispatchQueue.main.async {
+                    print(dict)
+                    if let track = try? Track(fromSpotify: dict) {
+                        completion(track)
+                    }
+                    // you have received `dict` JSON data!
                 }
             }
-        }.resume()
+            catch let error {
+                DispatchQueue.main.async {
+                    print(error)
+                    // an error occurred
+                }
+            }
+        }
     }
     
     func getTracksFromIsrcID(isrcs: [String], completion: @escaping (([Track?]) -> ())) {
-        if authToken == nil {
-            return
-        }
         var tracks = [Track?]()
+        
         for isrc in isrcs {
+            let url = baseURL.appendingPathComponent("search")
+            var urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: true)!
+            urlComponents.queryItems = [URLQueryItem(name: "q", value: "isrc:\(isrc)"), URLQueryItem(name: "type", value: "track"), URLQueryItem(name: "limit", value: "1")]
             
-            guard var url = URLComponents(string: baseURL + "search") else { return }
+            let request = authClient.request(forURL: urlComponents.url!)
             
-            url.queryItems = [URLQueryItem(name: "q", value: "isrc:\(isrc)"), URLQueryItem(name: "type", value: "track"), URLQueryItem(name: "limit", value: "1")]
-            var request = URLRequest(url: url.url!)
-            request.setValue("Bearer " + authToken!, forHTTPHeaderField: "Authorization")
-            
-            URLSession.shared.dataTask(with: request) { (data, _, _) in
-                if let data = data,
-                    let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                    let tracksJSON = json["tracks"] as! [String: Any]
-                    
-                    let items = tracksJSON["items"] as! [[String:Any]]
-                    let track = try? Track(fromSpotify: items[0])
-                    tracks.append(track)
-                    
+            self.loader = OAuth2DataLoader(oauth2: authClient)
+            loader.perform(request: request) { response in
+                do {
+                    let dict = try response.responseJSON()
+                    DispatchQueue.main.async {
+                        print(dict)
+                        let tracksJSON = dict["tracks"] as! [String: Any]
+                        
+                        let items = tracksJSON["items"] as! [[String:Any]]
+                        let track = try? Track(fromSpotify: items[0])
+                        tracks.append(track)
+                        completion(tracks)
+                        // you have received `dict` JSON data!
+                    }
                 }
-                DispatchQueue.main.async {
-                    completion(tracks)
+                catch let error {
+                    DispatchQueue.main.async {
+                        print(error)
+                        // an error occurred
+                    }
                 }
-            }.resume()
-            
+            }
         }
     }
+    
+    func getSearchResults(for search: String, completion: @escaping ([Track]) -> ()) {
+        
+        let url = baseURL.appendingPathComponent("search")
+        var urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: true)!
+        urlComponents.queryItems = [URLQueryItem(name: "q", value: search), URLQueryItem(name: "type", value: "track"), URLQueryItem(name: "limit", value: "5")]
+        if urlComponents.url == nil {
+            return
+        }
+        let request = authClient.request(forURL: urlComponents.url!)
+        
+        
+        self.loader = OAuth2DataLoader(oauth2: authClient)
+        loader.perform(request: request) { response in
+            do {
+                let dict = try response.responseJSON()
+                var tracks = [Track]()
+                DispatchQueue.main.async {
+                    print(dict)
+                    let tracksJSON = dict["tracks"] as! [String: Any]
+                    
+                    let items = tracksJSON["items"] as! [[String:Any]]
+                    for item in items {
+                        if let track = try? Track(fromSpotify: item) {
+                            tracks.append(track)
+                        }
+                    }
+                    completion(tracks)
+                }
+            }
+            catch let error {
+                DispatchQueue.main.async {
+                    print(error)
+                    // an error occurred
+                }
+            }
+        }
+    }
+    
+
     
     
 }

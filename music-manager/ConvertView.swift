@@ -23,6 +23,7 @@ struct ConvertView: View {
     @State var clipboardTrack: Track?
     @State var targetTrack: Track?
     @State private var state: ConversionState = .notStarted
+    @State private var showModal = false
     
     var spotifyManager = SpotifyManager.shared
     var appleMusicManager = AppleMusicManager.shared
@@ -48,7 +49,7 @@ struct ConvertView: View {
             }
             else {
                 
-                TrackView(track: self.clipboardTrack!)    
+                ConvertTrackView(track: self.clipboardTrack!)    
                 if targetTrack != nil {
                     Button(action: {
                         UIApplication.shared.open(self.targetTrack!.url!)
@@ -62,10 +63,24 @@ struct ConvertView: View {
                     }
                 }
                 if state == .notAvailableSpotifyTrack {
-                    Text("Could not find track in Spotify")
+                    Text("Could not find track in Spotify").padding(10)
+                    Button(action: {
+                        self.showModal.toggle()
+                    }) {
+                        Text("Search in Spotify?")
+                    }.sheet(isPresented: self.$showModal) {
+                        SearchView(searchTerm: self.clipboardTrack!.name, manager: self.spotifyManager)
+                    }
                 }
                 if state == .notAvailableAppleMusicTrack {
-                    Text("Could not find track in Apple Music")
+                    Text("Could not find track in Apple Music").padding(10)
+                    Button(action: {
+                        self.showModal.toggle()
+                    }) {
+                        Text("Search in Apple Music?")
+                    }.sheet(isPresented: self.$showModal) {
+                        SearchView(searchTerm: self.clipboardTrack!.name, manager: self.appleMusicManager)
+                    }
                 }
             }
         }.onAppear {
@@ -76,10 +91,6 @@ struct ConvertView: View {
     }
     
     func checkURL() {
-        if self.spotifyManager.authToken == nil || self.appleMusicManager.userToken == nil {
-            self.state = .notLoggedIn
-            return
-        }
         
         if clipboardString != nil, let url = URL(string: clipboardString!) {
             if url.host == "open.spotify.com" {
@@ -149,7 +160,7 @@ struct ConvertView_Previews: PreviewProvider {
 }
 
 
-struct TrackView: View {
+struct ConvertTrackView: View {
     var track: Track
     
     var body: some View {
