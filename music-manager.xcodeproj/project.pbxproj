@@ -12,6 +12,8 @@
 		9F615E9224A3FB4F00F21344 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 9F615E9124A3FB4F00F21344 /* Alamofire */; };
 		9F615E9524A492C400F21344 /* OAuth2 in Frameworks */ = {isa = PBXBuildFile; productRef = 9F615E9424A492C400F21344 /* OAuth2 */; };
 		9F615E9924A4EA7400F21344 /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F615E9824A4EA7400F21344 /* SearchView.swift */; };
+		9F615E9C24A50E7200F21344 /* KeychainWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F615E9B24A50E7200F21344 /* KeychainWrapper.swift */; };
+		9F615E9E24A50E9F00F21344 /* KeychainWrapperAccessibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F615E9D24A50E9F00F21344 /* KeychainWrapperAccessibility.swift */; };
 		9FAA4B2424A2052200B1124F /* TransferView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FAA4B2324A2052200B1124F /* TransferView.swift */; };
 		9FAA4B2624A2378C00B1124F /* ConvertView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FAA4B2524A2378C00B1124F /* ConvertView.swift */; };
 		9FAA4B2824A262B700B1124F /* MusicTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FAA4B2724A262B700B1124F /* MusicTypes.swift */; };
@@ -32,6 +34,8 @@
 		9F0DEA96249BD81C00FB8599 /* environment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = environment.swift; sourceTree = "<group>"; };
 		9F615E8B24A3411B00F21344 /* AsyncImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncImage.swift; sourceTree = "<group>"; };
 		9F615E9824A4EA7400F21344 /* SearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchView.swift; sourceTree = "<group>"; };
+		9F615E9B24A50E7200F21344 /* KeychainWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainWrapper.swift; sourceTree = "<group>"; };
+		9F615E9D24A50E9F00F21344 /* KeychainWrapperAccessibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainWrapperAccessibility.swift; sourceTree = "<group>"; };
 		9FAA4B2324A2052200B1124F /* TransferView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferView.swift; sourceTree = "<group>"; };
 		9FAA4B2524A2378C00B1124F /* ConvertView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConvertView.swift; sourceTree = "<group>"; };
 		9FAA4B2724A262B700B1124F /* MusicTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicTypes.swift; sourceTree = "<group>"; };
@@ -63,6 +67,38 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		9F615E9A24A50E5300F21344 /* KeyChainWrapper */ = {
+			isa = PBXGroup;
+			children = (
+				9F615E9B24A50E7200F21344 /* KeychainWrapper.swift */,
+				9F615E9D24A50E9F00F21344 /* KeychainWrapperAccessibility.swift */,
+			);
+			path = KeyChainWrapper;
+			sourceTree = "<group>";
+		};
+		9F615E9F24A50EFB00F21344 /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+				9FC96156249D00A600FC823D /* AppleMusicManager.swift */,
+				9FAAAEF9249BC6360083C1D7 /* SpotifyManager.swift */,
+			);
+			path = Managers;
+			sourceTree = "<group>";
+		};
+		9F615EA024A50F1F00F21344 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				9F615E9824A4EA7400F21344 /* SearchView.swift */,
+				9FAA4B2524A2378C00B1124F /* ConvertView.swift */,
+				9FAA4B2324A2052200B1124F /* TransferView.swift */,
+				9FE8FE9F249BF36C00381953 /* TrackListView.swift */,
+				9FAAAEF5249BC58D0083C1D7 /* AddServiceView.swift */,
+				9FAAAEE5249BC5570083C1D7 /* ContentView.swift */,
+				9FAAAEF7249BC5CD0083C1D7 /* PlaylistsView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
 		9FAAAED5249BC5570083C1D7 = {
 			isa = PBXGroup;
 			children = (
@@ -82,23 +118,17 @@
 		9FAAAEE0249BC5570083C1D7 /* music-manager */ = {
 			isa = PBXGroup;
 			children = (
-				9F615E9824A4EA7400F21344 /* SearchView.swift */,
+				9F615EA024A50F1F00F21344 /* Views */,
 				9F615E8B24A3411B00F21344 /* AsyncImage.swift */,
 				9FAA4B2724A262B700B1124F /* MusicTypes.swift */,
-				9FAA4B2524A2378C00B1124F /* ConvertView.swift */,
-				9FAA4B2324A2052200B1124F /* TransferView.swift */,
-				9FC96156249D00A600FC823D /* AppleMusicManager.swift */,
-				9FE8FE9F249BF36C00381953 /* TrackListView.swift */,
-				9FAAAEF5249BC58D0083C1D7 /* AddServiceView.swift */,
 				9FAAAEE1249BC5570083C1D7 /* AppDelegate.swift */,
 				9FAAAEE3249BC5570083C1D7 /* SceneDelegate.swift */,
-				9FAAAEE5249BC5570083C1D7 /* ContentView.swift */,
-				9FAAAEF9249BC6360083C1D7 /* SpotifyManager.swift */,
+				9F615E9F24A50EFB00F21344 /* Managers */,
 				9F0DEA96249BD81C00FB8599 /* environment.swift */,
-				9FAAAEF7249BC5CD0083C1D7 /* PlaylistsView.swift */,
 				9FAAAEE7249BC55D0083C1D7 /* Assets.xcassets */,
 				9FAAAEEC249BC55D0083C1D7 /* LaunchScreen.storyboard */,
 				9FAAAEEF249BC55D0083C1D7 /* Info.plist */,
+				9F615E9A24A50E5300F21344 /* KeyChainWrapper */,
 				9FAAAEE9249BC55D0083C1D7 /* Preview Content */,
 			);
 			path = "music-manager";
@@ -200,6 +230,8 @@
 				9FAAAEE2249BC5570083C1D7 /* AppDelegate.swift in Sources */,
 				9FAAAEE4249BC5570083C1D7 /* SceneDelegate.swift in Sources */,
 				9FAA4B2624A2378C00B1124F /* ConvertView.swift in Sources */,
+				9F615E9C24A50E7200F21344 /* KeychainWrapper.swift in Sources */,
+				9F615E9E24A50E9F00F21344 /* KeychainWrapperAccessibility.swift in Sources */,
 				9F0DEA97249BD81C00FB8599 /* environment.swift in Sources */,
 				9F615E9924A4EA7400F21344 /* SearchView.swift in Sources */,
 				9FE8FEA0249BF36C00381953 /* TrackListView.swift in Sources */,

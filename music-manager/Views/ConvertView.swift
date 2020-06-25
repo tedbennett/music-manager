@@ -11,7 +11,6 @@ import SwiftUI
 struct ConvertView: View {
     enum ConversionState {
         case notStarted
-        case notLoggedIn
         case invalidURL
         case targetSpotifyTrack
         case targetAppleMusicTrack
@@ -32,13 +31,6 @@ struct ConvertView: View {
         VStack {
             if state == .notStarted {
                 Text("Working...")
-            }
-            else if state == .notLoggedIn {
-                VStack {
-                    Text("You are not logged in to both services").multilineTextAlignment(.center)
-                    Text("You can log in on the 'Add Services' tab").font(.subheadline)
-                        .multilineTextAlignment(.center)
-                }
             }
             else if state == .invalidURL {
                 VStack {
@@ -108,7 +100,17 @@ struct ConvertView: View {
                                         self.state = .notAvailableAppleMusicTrack
                                     }
                                 } else {
-                                    self.state = .notAvailableAppleMusicTrack
+                                    self.appleMusicManager.getSearchResults(for: self.clipboardTrack!.name) { tracks in
+                                        for track in tracks {
+                                            if track.name == self.clipboardTrack!.name && track.artists[0] == self.clipboardTrack!.artists[0] {
+                                                self.targetTrack = tracks[0]
+                                                self.state = .targetAppleMusicTrack
+                                                return
+                                            }
+                                        }
+                                        self.state = .notAvailableAppleMusicTrack
+                                    }
+                                    
                                 }
                             })
                         } else {
