@@ -8,6 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		9F0DEA97249BD81C00FB8599 /* environment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0DEA96249BD81C00FB8599 /* environment.swift */; };
+		9F3048C324A6052D00134E1E /* PromiseKit in Frameworks */ = {isa = PBXBuildFile; productRef = 9F3048C224A6052D00134E1E /* PromiseKit */; };
+		9F3048C524A618E800134E1E /* SpotifyObjects.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F3048C424A618E800134E1E /* SpotifyObjects.swift */; };
+		9F3048C724A6294B00134E1E /* AppleMusicObjects.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F3048C624A6294B00134E1E /* AppleMusicObjects.swift */; };
 		9F615E8C24A3411B00F21344 /* AsyncImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F615E8B24A3411B00F21344 /* AsyncImage.swift */; };
 		9F615E9224A3FB4F00F21344 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 9F615E9124A3FB4F00F21344 /* Alamofire */; };
 		9F615E9524A492C400F21344 /* OAuth2 in Frameworks */ = {isa = PBXBuildFile; productRef = 9F615E9424A492C400F21344 /* OAuth2 */; };
@@ -32,6 +35,8 @@
 
 /* Begin PBXFileReference section */
 		9F0DEA96249BD81C00FB8599 /* environment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = environment.swift; sourceTree = "<group>"; };
+		9F3048C424A618E800134E1E /* SpotifyObjects.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyObjects.swift; sourceTree = "<group>"; };
+		9F3048C624A6294B00134E1E /* AppleMusicObjects.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleMusicObjects.swift; sourceTree = "<group>"; };
 		9F615E8B24A3411B00F21344 /* AsyncImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncImage.swift; sourceTree = "<group>"; };
 		9F615E9824A4EA7400F21344 /* SearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchView.swift; sourceTree = "<group>"; };
 		9F615E9B24A50E7200F21344 /* KeychainWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainWrapper.swift; sourceTree = "<group>"; };
@@ -60,6 +65,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9F615E9524A492C400F21344 /* OAuth2 in Frameworks */,
+				9F3048C324A6052D00134E1E /* PromiseKit in Frameworks */,
 				9F615E9224A3FB4F00F21344 /* Alamofire in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -79,6 +85,8 @@
 		9F615E9F24A50EFB00F21344 /* Managers */ = {
 			isa = PBXGroup;
 			children = (
+				9F3048C624A6294B00134E1E /* AppleMusicObjects.swift */,
+				9F3048C424A618E800134E1E /* SpotifyObjects.swift */,
 				9FC96156249D00A600FC823D /* AppleMusicManager.swift */,
 				9FAAAEF9249BC6360083C1D7 /* SpotifyManager.swift */,
 			);
@@ -161,6 +169,7 @@
 			packageProductDependencies = (
 				9F615E9124A3FB4F00F21344 /* Alamofire */,
 				9F615E9424A492C400F21344 /* OAuth2 */,
+				9F3048C224A6052D00134E1E /* PromiseKit */,
 			);
 			productName = "music-manager";
 			productReference = 9FAAAEDE249BC5570083C1D7 /* music-manager.app */;
@@ -193,6 +202,7 @@
 			packageReferences = (
 				9F615E9024A3FB4F00F21344 /* XCRemoteSwiftPackageReference "Alamofire" */,
 				9F615E9324A492C400F21344 /* XCRemoteSwiftPackageReference "OAuth2" */,
+				9F3048C124A6052D00134E1E /* XCRemoteSwiftPackageReference "PromiseKit" */,
 			);
 			productRefGroup = 9FAAAEDF249BC5570083C1D7 /* Products */;
 			projectDirPath = "";
@@ -224,10 +234,12 @@
 				9FAAAEFA249BC6360083C1D7 /* SpotifyManager.swift in Sources */,
 				9FAA4B2824A262B700B1124F /* MusicTypes.swift in Sources */,
 				9FAA4B2424A2052200B1124F /* TransferView.swift in Sources */,
+				9F3048C724A6294B00134E1E /* AppleMusicObjects.swift in Sources */,
 				9FAAAEF8249BC5CD0083C1D7 /* PlaylistsView.swift in Sources */,
 				9FC96157249D00A600FC823D /* AppleMusicManager.swift in Sources */,
 				9FAAAEF6249BC58D0083C1D7 /* AddServiceView.swift in Sources */,
 				9FAAAEE2249BC5570083C1D7 /* AppDelegate.swift in Sources */,
+				9F3048C524A618E800134E1E /* SpotifyObjects.swift in Sources */,
 				9FAAAEE4249BC5570083C1D7 /* SceneDelegate.swift in Sources */,
 				9FAA4B2624A2378C00B1124F /* ConvertView.swift in Sources */,
 				9F615E9C24A50E7200F21344 /* KeychainWrapper.swift in Sources */,
@@ -432,6 +444,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		9F3048C124A6052D00134E1E /* XCRemoteSwiftPackageReference "PromiseKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mxcl/PromiseKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 6.13.2;
+			};
+		};
 		9F615E9024A3FB4F00F21344 /* XCRemoteSwiftPackageReference "Alamofire" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/Alamofire/Alamofire.git";
@@ -451,6 +471,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		9F3048C224A6052D00134E1E /* PromiseKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9F3048C124A6052D00134E1E /* XCRemoteSwiftPackageReference "PromiseKit" */;
+			productName = PromiseKit;
+		};
 		9F615E9124A3FB4F00F21344 /* Alamofire */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 9F615E9024A3FB4F00F21344 /* XCRemoteSwiftPackageReference "Alamofire" */;

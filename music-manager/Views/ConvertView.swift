@@ -170,7 +170,17 @@ struct ConvertView: View {
                                             self.state = .trackNotAvailable
                                         }
                                     } else {
-                                        self.state = .trackNotAvailable
+                                        SpotifyManager.shared.getSearchResults(for: self.clipboardTrack!.name) { tracks in
+                                            for track in tracks {
+                                                if track.name == self.clipboardTrack!.name && track.artists[0] == self.clipboardTrack!.artists[0] {
+                                                    self.targetTrack = tracks[0]
+                                                    self.state = .trackAvailable
+                                                    return
+                                                }
+                                            }
+                                            self.state = .trackNotAvailable
+                                        }
+                                        
                                     }
                                 })
                             } else {

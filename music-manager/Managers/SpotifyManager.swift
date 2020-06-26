@@ -59,19 +59,14 @@ class SpotifyManager: Manager {
         self.loader = OAuth2DataLoader(oauth2: authClient)
         loader.perform(request: request) { response in
             do {
-                let dict = try response.responseJSON()
-                var playlists = [Playlist]()
+                let playlistsResponse = try JSONDecoder().decode(SpotifyPagingObject<SpotifyPlaylist>.self, from: response.data!)
                 DispatchQueue.main.async {
-                    print(dict)
-                    for case let result in dict["items"] as! [[String: Any]] {
-                        if let playlist = try? Playlist(fromSpotify: result) {
-                            playlists.append(playlist)
-                            
-                            
-                        }
+                    
+                    let playlists : [Playlist] = playlistsResponse.items.map {
+                        Playlist(spotifyResponse: $0)
                     }
+                    
                     completion(playlists)
-                    // you have received `dict` JSON data!
                 }
             }
             catch let error {
@@ -91,28 +86,18 @@ class SpotifyManager: Manager {
         self.loader = OAuth2DataLoader(oauth2: authClient)
         loader.perform(request: request) { response in
             do {
-                let dict = try response.responseJSON()
-                var tracks = [Track]()
+                let tracksResponse = try JSONDecoder().decode(SpotifyPagingObject<SpotifyPlaylistTrack>.self, from: response.data!)
                 DispatchQueue.main.async {
-                    print(dict)
-                    for case let result in dict["items"] as! [[String: Any]] {
-                        let local = result["is_local"] as! Bool
-                        
-                        let track = result["track"] as! [String:Any]
-                        
-                        if let track = try? Track(fromSpotify: track) {
-                            track.local = local
-                            tracks.append(track)
-                        }
+                    
+                    let tracks : [Track] = tracksResponse.items.map {
+                        Track(spotifyResponse: $0)
                     }
                     completion(tracks)
-                    // you have received `dict` JSON data!
                 }
             }
             catch let error {
                 DispatchQueue.main.async {
                     print(error)
-                    // an error occurred
                 }
             }
         }
@@ -126,13 +111,9 @@ class SpotifyManager: Manager {
         self.loader = OAuth2DataLoader(oauth2: authClient)
         loader.perform(request: request) { response in
             do {
-                let dict = try response.responseJSON()
+                let trackResponse = try JSONDecoder().decode(SpotifyTrack.self, from: response.data!)
                 DispatchQueue.main.async {
-                    print(dict)
-                    if let track = try? Track(fromSpotify: dict) {
-                        completion(track)
-                    }
-                    // you have received `dict` JSON data!
+                    completion(Track(spotifyResponse: trackResponse, isLocal: false))
                 }
             }
             catch let error {
@@ -145,8 +126,6 @@ class SpotifyManager: Manager {
     }
     
     func getTracksFromIsrcID(isrcs: [String], completion: @escaping (([Track]) -> ())) {
-        var tracks = [Track]()
-        
         for isrc in isrcs {
             let url = baseURL.appendingPathComponent("search")
             var urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: true)!
@@ -157,18 +136,14 @@ class SpotifyManager: Manager {
             self.loader = OAuth2DataLoader(oauth2: authClient)
             loader.perform(request: request) { response in
                 do {
-                    let dict = try response.responseJSON()
+                    let json = try response.responseJSON()
+                    let searchResponse = try JSONDecoder().decode(SpotifySearch.self, from: response.data!)
                     DispatchQueue.main.async {
-                        print(dict)
-                        let tracksJSON = dict["tracks"] as! [String: Any]
                         
-                        if let items = tracksJSON["items"] as? [[String:Any]] {
-                            if let track = try? Track(fromSpotify: items[0]) {
-                                tracks.append(track)
-                            }
+                        let tracks : [Track] = searchResponse.tracks!.items.map {
+                            Track(spotifyResponse: $0, isLocal: false)
                         }
                         completion(tracks)
-                        // you have received `dict` JSON data!
                     }
                 }
                 catch let error {
@@ -195,17 +170,11 @@ class SpotifyManager: Manager {
         self.loader = OAuth2DataLoader(oauth2: authClient)
         loader.perform(request: request) { response in
             do {
-                let dict = try response.responseJSON()
-                var tracks = [Track]()
+                let searchResponse = try JSONDecoder().decode(SpotifySearch.self, from: response.data!)
                 DispatchQueue.main.async {
-                    print(dict)
-                    let tracksJSON = dict["tracks"] as! [String: Any]
                     
-                    let items = tracksJSON["items"] as! [[String:Any]]
-                    for item in items {
-                        if let track = try? Track(fromSpotify: item) {
-                            tracks.append(track)
-                        }
+                    let tracks : [Track] = searchResponse.tracks!.items.map {
+                        Track(spotifyResponse: $0, isLocal: false)
                     }
                     completion(tracks)
                 }
@@ -218,87 +187,37 @@ class SpotifyManager: Manager {
             }
         }
     }
-    
-
-    
-    
 }
 
 extension Playlist {
-    convenience init(fromSpotify json: [String: Any]) throws {
-        guard let id = json["id"] as? String
-            else { throw SerializationError.missing("id") }
+    convenience init(spotifyResponse response: SpotifyPlaylist) {
+        let id = response.id
+        let name = response.name
+        let description = response.description ?? ""
+        let imageURL = response.images.first?.url
         
-        guard let name = json["name"] as? String
-            else { throw SerializationError.missing("name") }
-        
-        guard let imagesJSON = json["images"] as? [[String:Any]]
-            else { throw SerializationError.missing("images") }
-        
-        var imageURL: URL?
-        for image in imagesJSON {
-            if image["height"] as? Int == 640 {
-                if let urlString = image["url"] as? String {
-                    imageURL = URL(string: urlString)
-                }
-            }
-        }
-        
-        if imageURL == nil {
-            throw SerializationError.missing("imageURL")
-        }
-        self.init(id: id, name: name, imageURL: imageURL!)
+        self.init(id: id, name: name, description: description, imageURL: imageURL!)
     }
 }
 
 extension Track {
-    convenience init(fromSpotify json: [String: Any]) throws {
+    convenience init(spotifyResponse response: SpotifyPlaylistTrack) {
+        let isLocal = response.isLocal
+        self.init(spotifyResponse: response.track, isLocal: isLocal)
+    }
+    
+    
+    convenience init(spotifyResponse response: SpotifyTrack, isLocal: Bool) {
+        let id = response.id ?? UUID().uuidString
+        let name = response.name
+        let url = response.externalUrls.spotify
+        let imageURL = response.album.images.first?.url
+        let artists = response.artists.map { $0.name }
+        let albumName = response.album.name
+        let isrcID = response.externalIds?.isrc
         
-        let id = json["id"] as? String
-        
-        guard let externalUrls = json["external_urls"] as? [String:Any]
-            else { throw SerializationError.missing("external_urls") }
-        var url: URL?
-        if let urlString = externalUrls["spotify"] as? String {
-            url = URL(string: urlString)
-        }
-        
-        guard let name = json["name"] as? String
-            else { throw SerializationError.missing("name") }
-        
-        guard let artistsJSON = json["artists"] as? [[String:Any]]
-            else { throw SerializationError.missing("artists") }
-        
-        guard let albumJSON = json["album"] as? [String:Any],
-            let albumName = albumJSON["name"] as? String,
-            let imagesJSON = albumJSON["images"] as? [[String:Any]]
-            else { throw SerializationError.missing("album") }
-        
-        
-        var imageURL: URL?
-        for image in imagesJSON {
-            if image["height"] as? Int == 640 {
-                if let imageUrlString = image["url"] as? String {
-                    imageURL = URL(string: imageUrlString)
-                }
-            }
-        }
-        
-        let externalIdsJSON = json["external_ids"] as? [String: Any]
-        var isrcID: String?
-        if externalIdsJSON != nil, !externalIdsJSON!.isEmpty {
-            isrcID = externalIdsJSON!["isrc"] as? String
-        }
-        
-        var artists = [String]()
-        for artist in artistsJSON {
-            if let artistName = artist["name"] as? String {
-                artists.append(artistName)
-            }
-        }
-        self.init(serviceId: id ?? UUID().uuidString, name: name, url: url, local: false, artists: artists, album: albumName, imageURL: imageURL, isrcID: isrcID)
+        self.init(serviceId: id, name: name, url: url, local: isLocal, artists: artists, album: albumName, imageURL: imageURL, isrcID: isrcID)
     }
 }
-
 
 

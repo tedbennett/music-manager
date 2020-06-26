@@ -8,6 +8,8 @@
 
 import Foundation
 import StoreKit
+import Alamofire
+import PromiseKit
 
 class AppleMusicManager: Manager {
     static var type: ServiceType = .AppleMusic
@@ -328,7 +330,7 @@ extension Playlist {
         }
         
         
-        self.init(id: id, name: name, imageURL: albumUrl)
+        self.init(id: id, name: name, description: "", imageURL: albumUrl)
     }
 }
 

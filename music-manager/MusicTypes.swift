@@ -35,15 +35,17 @@ class Playlist: ObservableObject, Identifiable {
     var name: String
     var imageURL: URL?
     var url: URL?
+    var description: String
     @Published var tracks: [Track]
     
-    init(id: String, name: String, url: URL? = nil, imageURL: URL? = nil,
+    init(id: String, name: String, description: String, url: URL? = nil, imageURL: URL? = nil,
          tracks: [Track] = []) {
         self.id = id
         self.name = name
         self.url = url
         self.imageURL = imageURL
         self.tracks = tracks
+        self.description = description
     }
 }
 
