@@ -15,7 +15,19 @@ protocol Manager {
     func getIsrcID(id: String, completion: @escaping (Track) -> ())
     func getTracksFromIsrcID(isrcs: [String], completion: @escaping ([Track?]) -> ())
     func getSearchResults(for search: String, completion: @escaping ([Track]) -> ())
+    static var type: ServiceType {get}
 }
+
+enum ServiceType {
+    case AppleMusic
+    case Spotify
+}
+
+let serviceNames: [ServiceType:String] = [
+    .AppleMusic: "Apple Music",
+    .Spotify: "Spotify"
+]
+
 
 
 class Playlist: ObservableObject, Identifiable {

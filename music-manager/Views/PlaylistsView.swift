@@ -22,7 +22,7 @@ struct PlaylistsView<ServiceManager: Manager>: View {
                         if playlist.imageURL != nil {
                             AsyncImage(url: playlist.imageURL!, cache: self.cache, placeholder: Image(systemName: "ellipsis"), configuration: {
                                 $0.resizable()
-                            }).frame(width: 75, height: 75)
+                            }).frame(width: 75, height: 75).cornerRadius(4)
                         } else {
                             Image(systemName: "camera").frame(width: 75, height: 75)
                         }

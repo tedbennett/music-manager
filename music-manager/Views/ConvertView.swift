@@ -12,20 +12,20 @@ struct ConvertView: View {
     enum ConversionState {
         case notStarted
         case invalidURL
-        case targetSpotifyTrack
-        case targetAppleMusicTrack
-        case notAvailableSpotifyTrack
-        case notAvailableAppleMusicTrack
+        case trackAvailable
+        case trackNotAvailable
     }
-    
-    @State var clipboardString: String?
-    @State var clipboardTrack: Track?
-    @State var targetTrack: Track?
+    @Environment(\.verticalSizeClass) var sizeClass
+    @State private var clipboardString: String?
+    @State private var clipboardTrack: Track?
+    @State private var targetTrack: Track?
     @State private var state: ConversionState = .notStarted
-    @State private var showModal = false
+    @State private var showSearchModal = false
     
-    var spotifyManager = SpotifyManager.shared
-    var appleMusicManager = AppleMusicManager.shared
+    @State private var targetServiceType: ServiceType?
+    
+    //var spotifyManager = SpotifyManager.shared
+    //var appleMusicManager = AppleMusicManager.shared
     
     var body: some View {
         VStack {
@@ -40,45 +40,79 @@ struct ConvertView: View {
                 }.padding(15)
             }
             else {
-                
-                ConvertTrackView(track: self.clipboardTrack!)    
-                if targetTrack != nil {
-                    Button(action: {
-                        UIApplication.shared.open(self.targetTrack!.url!)
-                    }) {
-                        if state == .targetAppleMusicTrack {
-                            Text("Open in Apple Music?")
-                        }
-                        if state == .targetSpotifyTrack {
-                            Text("Open in Spotify?")
-                        }
+                if sizeClass == .compact {
+                    HStack {
+                        TrackImage()
+                        TrackDetails()
                     }
-                }
-                if state == .notAvailableSpotifyTrack {
-                    Text("Could not find track in Spotify").padding(10)
-                    Button(action: {
-                        self.showModal.toggle()
-                    }) {
-                        Text("Search in Spotify?")
-                    }.sheet(isPresented: self.$showModal) {
-                        SearchView(searchTerm: self.clipboardTrack!.name, manager: self.spotifyManager)
-                    }
-                }
-                if state == .notAvailableAppleMusicTrack {
-                    Text("Could not find track in Apple Music").padding(10)
-                    Button(action: {
-                        self.showModal.toggle()
-                    }) {
-                        Text("Search in Apple Music?")
-                    }.sheet(isPresented: self.$showModal) {
-                        SearchView(searchTerm: self.clipboardTrack!.name, manager: self.appleMusicManager)
-                    }
+                } else {
+                    
+                        TrackImage()
+                        TrackDetails()
+                    
                 }
             }
-        }.onAppear {
+        }.onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
             self.state = .notStarted
             self.clipboardString = UIPasteboard.general.string
             self.checkURL()
+        }
+        .onAppear {
+            self.state = .notStarted
+            self.clipboardString = UIPasteboard.general.string
+            self.checkURL()
+        }
+    }
+    
+    func TrackDetails() -> some View {
+        VStack {
+            Text(self.clipboardTrack!.name).font(.title).padding(15).multilineTextAlignment(.center)
+            HStack {
+                ForEach(self.clipboardTrack!.artists, id:\.self) { artist in
+                    Text(artist).font(.headline).padding(10)
+                }
+            }
+            if targetTrack != nil {
+                Button(action: {
+                    UIApplication.shared.open(self.targetTrack!.url!)
+                }) {
+                    Text("Open in \(serviceNames[self.targetServiceType!]!)")
+                }.padding(10)
+            }
+            if state == .trackNotAvailable {
+                Text("Could not find track in \(serviceNames[self.targetServiceType!]!)").padding(10)
+                Button(action: {
+                    self.showSearchModal.toggle()
+                }) {
+                    Text("Search in \(serviceNames[self.targetServiceType!]!)")
+                }.sheet(isPresented: self.$showSearchModal) {
+                    if self.targetServiceType! == .AppleMusic {
+                        SearchView(searchTerm: self.clipboardTrack!.name, manager: AppleMusicManager.shared)
+                    } else {
+                        SearchView(searchTerm: self.clipboardTrack!.name, manager: SpotifyManager.shared)
+                    }
+                }
+            }
+        }
+    }
+    
+    func TrackImage() -> some View {
+        VStack {
+            if self.clipboardTrack!.imageURL != nil {
+                AsyncImage(url: self.clipboardTrack!.imageURL!, placeholder: VStack {
+                    Image(systemName: "camera").frame(width: 100, height: 100)
+                    }, configuration: {
+                        $0.resizable()
+                }).cornerRadius(10)
+                    .aspectRatio(1, contentMode: .fit)
+                    .frame(minWidth: 100, idealWidth: 300, maxWidth: 300, minHeight: 100, idealHeight: 300, maxHeight: 300, alignment: .center).padding(20)
+                
+            } else {
+                VStack {
+                    Image(systemName: "camera").frame(width: 300, height: 300, alignment: .center)
+                    Text("Unable to find cover art")
+                }
+            }
         }
     }
     
@@ -86,60 +120,61 @@ struct ConvertView: View {
         
         if clipboardString != nil, let url = URL(string: clipboardString!) {
             if url.host == "open.spotify.com" {
-                print(url.pathComponents)
+                self.targetServiceType = .AppleMusic
                 if url.pathComponents[1] == "track" {
-                    spotifyManager.getIsrcID(id: url.lastPathComponent, completion: { track in
+                    SpotifyManager.shared.getIsrcID(id: url.lastPathComponent, completion: { track in
                         self.clipboardTrack = track
                         if track.isrcID != nil {
-                            self.appleMusicManager.getTracksFromIsrcID(isrcs: [track.isrcID!], completion: { tracks in
+                            AppleMusicManager.shared.getTracksFromIsrcID(isrcs: [track.isrcID!], completion: { tracks in
                                 if tracks[0] != nil {
                                     if tracks[0]!.url != nil {
                                         self.targetTrack = tracks[0]
-                                        self.state = .targetAppleMusicTrack
+                                        self.state = .trackAvailable
                                     } else {
-                                        self.state = .notAvailableAppleMusicTrack
+                                        self.state = .trackNotAvailable
                                     }
                                 } else {
-                                    self.appleMusicManager.getSearchResults(for: self.clipboardTrack!.name) { tracks in
+                                    AppleMusicManager.shared.getSearchResults(for: self.clipboardTrack!.name) { tracks in
                                         for track in tracks {
                                             if track.name == self.clipboardTrack!.name && track.artists[0] == self.clipboardTrack!.artists[0] {
                                                 self.targetTrack = tracks[0]
-                                                self.state = .targetAppleMusicTrack
+                                                self.state = .trackAvailable
                                                 return
                                             }
                                         }
-                                        self.state = .notAvailableAppleMusicTrack
+                                        self.state = .trackNotAvailable
                                     }
                                     
                                 }
                             })
                         } else {
-                            self.state = .notAvailableAppleMusicTrack
+                            self.state = .trackNotAvailable
                         }
                     })
                 }
             } else if url.host == "music.apple.com" {
+                self.targetServiceType = .Spotify
                 let components = URLComponents(url: url, resolvingAgainstBaseURL: true)
                 if url.pathComponents[2] == "album" {
                     if let id = components?.queryItems?.first(where: { $0.name == "i"})?.value {
                         print(id)
-                        appleMusicManager.getIsrcID(id: id, completion: { track in
+                        AppleMusicManager.shared.getIsrcID(id: id, completion: { track in
                             self.clipboardTrack = track
                             if track.isrcID != nil {
-                                self.spotifyManager.getTracksFromIsrcID(isrcs: [track.isrcID!], completion: { tracks in
+                                SpotifyManager.shared.getTracksFromIsrcID(isrcs: [track.isrcID!], completion: { tracks in
                                     if tracks[0] != nil {
                                         if  tracks[0]!.url != nil {
                                             self.targetTrack = tracks[0]
-                                            self.state = .targetSpotifyTrack
+                                            self.state = .trackAvailable
                                         } else {
-                                            self.state = .notAvailableSpotifyTrack
+                                            self.state = .trackNotAvailable
                                         }
                                     } else {
-                                        self.state = .notAvailableSpotifyTrack
+                                        self.state = .trackNotAvailable
                                     }
                                 })
                             } else {
-                                self.state = .notAvailableSpotifyTrack
+                                self.state = .trackNotAvailable
                             }
                         })
                     }
@@ -162,6 +197,7 @@ struct ConvertView_Previews: PreviewProvider {
 }
 
 
+
 struct ConvertTrackView: View {
     var track: Track
     
@@ -173,7 +209,8 @@ struct ConvertTrackView: View {
                     Text("Loading")
                     }, configuration: {
                         $0.resizable()
-                }).frame(minWidth: 100, idealWidth: 300, maxWidth: 300, minHeight: 100, idealHeight: 300, maxHeight: 300, alignment: .center).padding(20)
+                    }).cornerRadius(5)
+                    .frame(minWidth: 100, idealWidth: 300, maxWidth: 300, minHeight: 100, idealHeight: 300, maxHeight: 300, alignment: .center).padding(20)
                 
             } else {
                 VStack {
@@ -181,12 +218,7 @@ struct ConvertTrackView: View {
                     Text("Unable to find cover art")
                 }
             }
-            Text(track.name).font(.title).padding(15).multilineTextAlignment(.center)
-            HStack {
-                ForEach(track.artists, id:\.self) { artist in
-                    Text(artist).font(.headline).padding(10)
-                }
-            }
+            
             
         }
     }

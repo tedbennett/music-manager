@@ -11,6 +11,8 @@ import OAuth2
 import Alamofire
 
 class SpotifyManager: Manager {
+    static var type: ServiceType = .Spotify
+    
     var baseURL = URL(string: "https://api.spotify.com/v1")!
     var searchURL = URL(string: "https://open.spotify.com/search")!
 
@@ -281,10 +283,10 @@ extension Track {
         }
         
         let externalIdsJSON = json["external_ids"] as? [String: Any]
-        
-        guard let isrcID = externalIdsJSON!["isrc"] as? String
-            else { throw SerializationError.missing("isrc") }
-        
+        var isrcID: String?
+        if externalIdsJSON != nil, !externalIdsJSON!.isEmpty {
+            isrcID = externalIdsJSON!["isrc"] as? String
+        }
         
         var artists = [String]()
         for artist in artistsJSON {

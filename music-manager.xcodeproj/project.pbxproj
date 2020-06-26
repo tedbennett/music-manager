@@ -119,16 +119,16 @@
 			isa = PBXGroup;
 			children = (
 				9F615EA024A50F1F00F21344 /* Views */,
+				9F615E9A24A50E5300F21344 /* KeyChainWrapper */,
+				9F615E9F24A50EFB00F21344 /* Managers */,
 				9F615E8B24A3411B00F21344 /* AsyncImage.swift */,
 				9FAA4B2724A262B700B1124F /* MusicTypes.swift */,
 				9FAAAEE1249BC5570083C1D7 /* AppDelegate.swift */,
 				9FAAAEE3249BC5570083C1D7 /* SceneDelegate.swift */,
-				9F615E9F24A50EFB00F21344 /* Managers */,
 				9F0DEA96249BD81C00FB8599 /* environment.swift */,
 				9FAAAEE7249BC55D0083C1D7 /* Assets.xcassets */,
 				9FAAAEEC249BC55D0083C1D7 /* LaunchScreen.storyboard */,
 				9FAAAEEF249BC55D0083C1D7 /* Info.plist */,
-				9F615E9A24A50E5300F21344 /* KeyChainWrapper */,
 				9FAAAEE9249BC55D0083C1D7 /* Preview Content */,
 			);
 			path = "music-manager";

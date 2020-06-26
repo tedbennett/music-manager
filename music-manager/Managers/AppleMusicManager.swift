@@ -10,11 +10,12 @@ import Foundation
 import StoreKit
 
 class AppleMusicManager: Manager {
+    static var type: ServiceType = .AppleMusic
 
     var baseURL = "https://api.music.apple.com/v1/"
     var developerToken = AppleMusicEnvironment.musicToken
-    var userToken: String?
-    var storefront: String?
+    var userToken: String? = KeychainWrapper.standard.string(forKey: "appleMusicUserToken")
+    var storefront: String? = KeychainWrapper.standard.string(forKey: "appleMusicStorefront")
     
     var controller = SKCloudServiceController()
     
@@ -31,6 +32,7 @@ class AppleMusicManager: Manager {
                             self.userToken = userToken
                             completion(userToken, error)
                             if userToken != nil {
+                                KeychainWrapper.standard.set(userToken!, forKey: "appleMusicUserToken")
                                 self.getUserStorefront()
                             }
                             
@@ -55,6 +57,7 @@ class AppleMusicManager: Manager {
                 for case let data in json["data"] as! [[String: Any]] {
                     let storefront = data["id"] as! String
                     self.storefront = storefront
+                    KeychainWrapper.standard.set(storefront, forKey: "appleMusicStorefront")
                 }
             }
         }.resume()

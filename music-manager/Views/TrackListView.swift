@@ -17,9 +17,6 @@ struct TrackListView<ServiceManager: Manager>: View {
     
     var body: some View {
         VStack {
-            if !playlist.tracks.isEmpty {
-                Text("\(playlist.tracks.count) tracks").font(.subheadline)
-            }
             List(playlist.tracks) { track in
                 TrackView(track: track)
             }.navigationBarTitle(playlist.name)
@@ -50,12 +47,14 @@ struct TrackView: View {
     var body: some View {
         HStack {
             if track.imageURL != nil {
-                AsyncImage(url: track.imageURL!, cache: self.cache, placeholder: Image(systemName: "ellipsis"), configuration: { $0.resizable() }).frame(width: 75, height: 75)
+                AsyncImage(url: track.imageURL!, cache: self.cache, placeholder: Image(systemName: "ellipsis"), configuration: { $0.resizable() }).frame(width: 75, height: 75).cornerRadius(4)
+            } else {
+                Image(systemName: "camera").frame(width: 75, height: 75)
             }
             
             VStack(alignment: .leading) {
-                Text(track.name).bold().lineLimit(2).padding(.bottom, 5)
-                Text(track.artists[0]).font(.subheadline)
+                Text(track.name).bold().lineLimit(2).padding(.bottom, 5).foregroundColor(track.local ? .gray : Color(UIColor.label))
+                Text(track.artists[0]).font(.subheadline).foregroundColor(track.local ? .gray : Color(UIColor.label))
             }
         }
     }
