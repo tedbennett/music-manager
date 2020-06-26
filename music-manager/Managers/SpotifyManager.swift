@@ -144,8 +144,8 @@ class SpotifyManager: Manager {
         }
     }
     
-    func getTracksFromIsrcID(isrcs: [String], completion: @escaping (([Track?]) -> ())) {
-        var tracks = [Track?]()
+    func getTracksFromIsrcID(isrcs: [String], completion: @escaping (([Track]) -> ())) {
+        var tracks = [Track]()
         
         for isrc in isrcs {
             let url = baseURL.appendingPathComponent("search")
@@ -162,9 +162,11 @@ class SpotifyManager: Manager {
                         print(dict)
                         let tracksJSON = dict["tracks"] as! [String: Any]
                         
-                        let items = tracksJSON["items"] as! [[String:Any]]
-                        let track = try? Track(fromSpotify: items[0])
-                        tracks.append(track)
+                        if let items = tracksJSON["items"] as? [[String:Any]] {
+                            if let track = try? Track(fromSpotify: items[0]) {
+                                tracks.append(track)
+                            }
+                        }
                         completion(tracks)
                         // you have received `dict` JSON data!
                     }
@@ -294,7 +296,7 @@ extension Track {
                 artists.append(artistName)
             }
         }
-        self.init(id: id ?? UUID().uuidString, name: name, url: url, local: false, artists: artists, album: albumName, imageURL: imageURL, isrcID: isrcID)
+        self.init(serviceId: id ?? UUID().uuidString, name: name, url: url, local: false, artists: artists, album: albumName, imageURL: imageURL, isrcID: isrcID)
     }
 }
 

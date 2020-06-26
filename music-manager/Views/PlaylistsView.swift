@@ -13,11 +13,12 @@ struct PlaylistsView<ServiceManager: Manager>: View {
     
     var manager: ServiceManager
     @State var playlists = [Playlist]()
+    var serviceType: ServiceType
     
     var body: some View {
         NavigationView {
             List(self.playlists) { playlist in
-                NavigationLink(destination: TrackListView<ServiceManager>(playlist: playlist, manager: self.manager)) {
+                NavigationLink(destination: TrackListView<ServiceManager>(serviceType: self.serviceType, playlist: playlist, manager: self.manager)) {
                     HStack {
                         if playlist.imageURL != nil {
                             AsyncImage(url: playlist.imageURL!, cache: self.cache, placeholder: Image(systemName: "ellipsis"), configuration: {

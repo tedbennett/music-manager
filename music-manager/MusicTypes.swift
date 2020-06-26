@@ -13,7 +13,7 @@ protocol Manager {
     func getUserPlaylists(completion: @escaping ([Playlist]) -> ())
     func getPlaylistTracks(id: String, completion: @escaping ([Track]) -> ())
     func getIsrcID(id: String, completion: @escaping (Track) -> ())
-    func getTracksFromIsrcID(isrcs: [String], completion: @escaping ([Track?]) -> ())
+    func getTracksFromIsrcID(isrcs: [String], completion: @escaping ([Track]) -> ())
     func getSearchResults(for search: String, completion: @escaping ([Track]) -> ())
     static var type: ServiceType {get}
 }
@@ -48,7 +48,7 @@ class Playlist: ObservableObject, Identifiable {
 }
 
 class Track: ObservableObject, Identifiable {
-    var id: String
+    var serviceId: String
     var name: String
     var local: Bool
     var artists: [String]
@@ -58,8 +58,8 @@ class Track: ObservableObject, Identifiable {
     var url: URL?
     @Published var image: UIImage?
     
-    init(id: String, name: String, url: URL? = nil, local: Bool, artists: [String], album: String, imageURL: URL?, isrcID: String? = nil) {
-        self.id = id
+    init(serviceId: String, name: String, url: URL? = nil, local: Bool, artists: [String], album: String, imageURL: URL?, isrcID: String? = nil) {
+        self.serviceId = serviceId
         self.name = name
         self.url = url
         self.local = local

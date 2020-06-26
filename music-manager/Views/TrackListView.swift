@@ -9,20 +9,28 @@
 import SwiftUI
 
 struct TrackListView<ServiceManager: Manager>: View {
-    
-    
+    var serviceType: ServiceType
     @ObservedObject var playlist: Playlist
     var manager: ServiceManager
     @State private var imagesFinishedLoading = false
+    @State private var finishedTransfer = false
     
     var body: some View {
         VStack {
             List(playlist.tracks) { track in
                 TrackView(track: track)
             }.navigationBarTitle(playlist.name)
-                .navigationBarItems(trailing: NavigationLink(destination: TransferView(playlist: self.playlist, manager: self.manager), label: {
+                .navigationBarItems(trailing:
+                    //NavigationLink(destination: TransferView(playlist: self.playlist, manager: self.manager), label: {
+                    Button(action: {
+                        self.transferPlaylist()
+                    }, label: {
                     Text("Transfer")
-                }))
+                        }).disabled(finishedTransfer)
+            )
+                .alert(isPresented: self.$finishedTransfer, content: {
+                    Alert(title: Text("Transfer Success"))
+                })
                 .onAppear {
                     if self.playlist.tracks.isEmpty {
                         self.manager.getPlaylistTracks(id: self.playlist.id, completion: { tracks in
@@ -33,7 +41,19 @@ struct TrackListView<ServiceManager: Manager>: View {
             }
         }
     }
+    func transferPlaylist() {
+        if self.serviceType == .Spotify {
+            AppleMusicManager.shared.transferPlaylistToAppleMusic(name: self.playlist.name, with: self.playlist.tracks, completion: {
+                self.finishedTransfer = true
+            })
+        }
+    }
 }
+
+
+
+
+
 
 //struct TrackListView_Previews: PreviewProvider {
 //    static var previews: some View {

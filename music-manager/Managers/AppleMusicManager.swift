@@ -177,7 +177,7 @@ class AppleMusicManager: Manager {
         }.resume()
     }
     
-    func getTracksFromIsrcID(isrcs: [String], completion: @escaping ([Track?]) -> ()) {
+    func getTracksFromIsrcID(isrcs: [String], completion: @escaping ([Track]) -> ()) {
         guard var url = URLComponents(string: baseURL + "catalog/\(storefront ?? "us")/songs") else { return }
         
         url.queryItems = [URLQueryItem(name: "filter[isrc]", value: isrcs.joined(separator: ","))]
@@ -185,28 +185,20 @@ class AppleMusicManager: Manager {
         var request = URLRequest(url: url.url!)
         request.setValue("Bearer " + developerToken, forHTTPHeaderField: "Authorization")
         //request.setValue(userToken!, forHTTPHeaderField: "Music-User-Token")
-        var isrcIDs = isrcs
-        var tracks = [Track?]()
+        var tracks = [Track]()
         URLSession.shared.dataTask(with: request) { (data, urlResponse, error) in
             if let data = data,
                 let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
                 for case let data in json["data"] as! [[String: Any]] {
                     if let track = try? Track(fromAppleMusic: data) {
-                        if track.isrcID != nil && isrcIDs.contains(track.isrcID!) {
-                            tracks.append(track)
-                            isrcIDs.removeAll(where: {
-                                isrc in isrc == track.isrcID
-                            })
-                        } else {
-                            tracks.append(nil)
-                        }
+                        tracks.append(track)
                     }
                 }
                 
             }
             DispatchQueue.main.async {
                 
-                completion(tracks.isEmpty ? [nil] : tracks)
+                completion(tracks)
                 
             }
         }.resume()
@@ -223,7 +215,7 @@ class AppleMusicManager: Manager {
         var request = URLRequest(url: url.url!)
         
         request.setValue("Bearer " + developerToken, forHTTPHeaderField: "Authorization")
-        //request.setValue(userToken!, forHTTPHeaderField: "Music-User-Token")
+        
         var tracks = [Track]()
         URLSession.shared.dataTask(with: request) { (data, urlResponse, error) in
             if let data = data,
@@ -242,6 +234,71 @@ class AppleMusicManager: Manager {
                 completion(tracks)
             }
         }.resume()
+    }
+    
+    func transferPlaylistToAppleMusic(name: String, with tracks: [Track], completion: @escaping () -> Void) {
+        var isrcIds = [String]()
+        for track in tracks {
+            if let isrcId = track.isrcID {
+                isrcIds.append(isrcId)
+            }
+        }
+        getTracksFromIsrcID(isrcs: isrcIds, completion: { tracks in
+            guard let url = URL(string: self.baseURL + "me/library/playlists") else { return }
+            
+            let attributes = ["name": name]
+            var songObjects = [[String: Any]]()
+            
+            for track in tracks {
+                songObjects.append( ["id": track.serviceId, "type": "songs"])
+            }
+            
+            let httpBody = [
+                "attributes": attributes,
+                
+//                "relationships": [
+//                    "tracks": [
+//                        "data": songObjects
+//                    ]
+//                ]
+                ] as [String : Any]
+            let bodyData = try? JSONSerialization.data(withJSONObject: httpBody)
+            var request = URLRequest(url: url)
+            request.httpBody = bodyData
+
+            request.setValue("Bearer " + self.developerToken, forHTTPHeaderField: "Authorization")
+            request.setValue(self.userToken!, forHTTPHeaderField: "Music-User-Token")
+            
+            request.httpMethod = "POST"
+            
+            URLSession.shared.dataTask(with: request) { (data, urlResponse, error) in
+                if let data = data,
+                    let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+                    if let data = json["data"] as? [[String: Any]] {
+                        let playlistId = data[0]["id"] as! String
+                        let addTracksURL = url.appendingPathComponent("\(playlistId)/tracks")
+                        let httpBody = [
+                            "data": songObjects
+                        ]
+                        let bodyData = try? JSONSerialization.data(withJSONObject: httpBody)
+                        var addTracksRequest = URLRequest(url: addTracksURL)
+                        addTracksRequest.httpBody = bodyData
+                        
+                        addTracksRequest.setValue("Bearer " + self.developerToken, forHTTPHeaderField: "Authorization")
+                        addTracksRequest.setValue(self.userToken!, forHTTPHeaderField: "Music-User-Token")
+                        
+                        addTracksRequest.httpMethod = "POST"
+                        URLSession.shared.dataTask(with: addTracksRequest) { (data, urlResponse, error) in
+                            completion()
+                        }
+                    }
+                }
+                if error == nil {
+                    
+                }
+            }.resume()
+        })
+        
     }
 }
 
@@ -309,7 +366,7 @@ extension Track {
         
         
         
-        self.init(id: id, name: name, url: url, local: false, artists: [artist], album: album, imageURL: imageURL, isrcID: isrc)
+        self.init(serviceId: id, name: name, url: url, local: false, artists: [artist], album: album, imageURL: imageURL, isrcID: isrc)
         
     }
 }

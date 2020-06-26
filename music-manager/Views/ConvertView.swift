@@ -126,8 +126,8 @@ struct ConvertView: View {
                         self.clipboardTrack = track
                         if track.isrcID != nil {
                             AppleMusicManager.shared.getTracksFromIsrcID(isrcs: [track.isrcID!], completion: { tracks in
-                                if tracks[0] != nil {
-                                    if tracks[0]!.url != nil {
+                                if !tracks.isEmpty {
+                                    if tracks[0].url != nil {
                                         self.targetTrack = tracks[0]
                                         self.state = .trackAvailable
                                     } else {
@@ -162,8 +162,8 @@ struct ConvertView: View {
                             self.clipboardTrack = track
                             if track.isrcID != nil {
                                 SpotifyManager.shared.getTracksFromIsrcID(isrcs: [track.isrcID!], completion: { tracks in
-                                    if tracks[0] != nil {
-                                        if  tracks[0]!.url != nil {
+                                    if !tracks.isEmpty {
+                                        if tracks[0].url != nil {
                                             self.targetTrack = tracks[0]
                                             self.state = .trackAvailable
                                         } else {
