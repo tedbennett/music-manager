@@ -15,29 +15,40 @@ protocol AppleMusicRelationship: Decodable {
     var next: URL? { get set }
 }
 
-protocol Resource: Decodable {
+protocol AppleMusicResource: Decodable {
     associatedtype Relationships
     associatedtype Attributes
     
     var relationships: Relationships? { get set }
     var attributes: Attributes? { get set }
     var type: String { get set }
-    var href: String? { get set }
+    var href: URL? { get set }
     var id: String { get set }
 }
 
 
-struct AppleMusicResponse<Object: Resource>: Decodable {
+struct AppleMusicResponse<Object: AppleMusicResource>: Decodable {
     var data: [Object]
+    var next: URL?
 }
 
-
-struct AppleMusicSong: Resource {
+struct AppleMusicSearchResponse: Decodable {
+    var results: SearchResults
+    
+    struct SearchResults: Decodable {
+        var albums: AppleMusicResponse<AppleMusicAlbum>?
+        var artists: AppleMusicResponse<AppleMusicArtist>?
+        var playlists: AppleMusicResponse<AppleMusicPlaylist>?
+        var songs: AppleMusicResponse<AppleMusicSong>?
+    }
+    
+}
+struct AppleMusicSong: AppleMusicResource {
  
     var relationships: Relationships?
     var attributes: Attributes?
     var type: String
-    var href: String?
+    var href: URL?
     var id: String
     
     struct Relationships: Decodable {
@@ -60,6 +71,7 @@ struct AppleMusicSong: Resource {
         var movementName: String?
         var movementNumber: Int?
         var name: String
+        var playParams: AppleMusicPlayParams?
         var previews: [AppleMusicPreview]
         var releaseDate: String
         var trackNumber: Int
@@ -68,12 +80,12 @@ struct AppleMusicSong: Resource {
     }
 }
 
-struct AppleMusicLibrarySong: Resource {
+struct AppleMusicLibrarySong: AppleMusicResource {
     
     var relationships: Relationships?
     var attributes: Attributes?
     var type: String
-    var href: String?
+    var href: URL?
     var id: String
     
     struct Relationships: Decodable {
@@ -86,18 +98,19 @@ struct AppleMusicLibrarySong: Resource {
         var artistName: String
         var artwork: AppleMusicArtwork
         var contentRating: String?
-        var discNumber: Int
+        var discNumber: Int?
         var durationInMillis: Int?
+        var playParams: AppleMusicPlayParams?
         var name: String
         var trackNumber: Int
     }
 }
 
-struct AppleMusicAlbum: Resource {
+struct AppleMusicAlbum: AppleMusicResource {
     var relationships: Relationships?
     var attributes: Attributes?
     var type: String
-    var href: String?
+    var href: URL?
     var id: String
     
     struct Relationships: Decodable {
@@ -116,6 +129,7 @@ struct AppleMusicAlbum: Resource {
         var isComplete: Bool
         var isSingle: Bool
         var name: String
+        var playParams: AppleMusicPlayParams?
         var recordLabel: String
         var releaseDate: String
         var trackCount: Int
@@ -124,11 +138,11 @@ struct AppleMusicAlbum: Resource {
     }
 }
 
-struct AppleMusicLibraryAlbum: Resource {
+struct AppleMusicLibraryAlbum: AppleMusicResource {
     var relationships: Relationships?
     var attributes: Attributes?
     var type: String
-    var href: String?
+    var href: URL?
     var id: String
     
     struct Relationships: Decodable {
@@ -141,15 +155,16 @@ struct AppleMusicLibraryAlbum: Resource {
         var artwork: AppleMusicArtwork
         var contentRating: String?
         var name: String
+        var playParams: AppleMusicPlayParams?
         var trackCount: Int
     }
 }
 
-struct AppleMusicArtist: Resource {
+struct AppleMusicArtist: AppleMusicResource {
     var relationships: Relationships?
     var attributes: Attributes?
     var type: String
-    var href: String?
+    var href: URL?
     var id: String
     
     struct Relationships: Decodable {
@@ -164,11 +179,11 @@ struct AppleMusicArtist: Resource {
     }
 }
 
-struct AppleMusicLibraryArtist: Resource {
+struct AppleMusicLibraryArtist: AppleMusicResource {
     var relationships: Relationships?
     var attributes: Attributes?
     var type: String
-    var href: String?
+    var href: URL?
     var id: String
     
     struct Relationships: Decodable {
@@ -180,11 +195,11 @@ struct AppleMusicLibraryArtist: Resource {
     }
 }
 
-struct AppleMusicPlaylist: Resource {
+struct AppleMusicPlaylist: AppleMusicResource {
     var relationships: Relationships?
     var attributes: Attributes?
     var type: String
-    var href: String?
+    var href: URL?
     var id: String
     
     struct Relationships: Decodable {
@@ -198,15 +213,16 @@ struct AppleMusicPlaylist: Resource {
         var lastModifiedDate: String
         var name: String
         var playlistType: String
+        var playParams: AppleMusicPlayParams?
         var url: URL
     }
 }
 
-struct AppleMusicLibraryPlaylist: Resource {
+struct AppleMusicLibraryPlaylist: AppleMusicResource {
     var relationships: Relationships?
     var attributes: Attributes?
     var type: String
-    var href: String?
+    var href: URL?
     var id: String
     
     struct Relationships: Decodable {
@@ -217,6 +233,7 @@ struct AppleMusicLibraryPlaylist: Resource {
         var artwork: AppleMusicArtwork?
         var description: AppleMusicEditorialNotes?
         var name: String
+        var playParams: AppleMusicPlayParams?
         var canEdit: Bool
     }
 }
@@ -225,13 +242,13 @@ struct AppleMusicLibraryPlaylist: Resource {
 
 struct AppleMusicArtwork: Decodable {
     var bgColor: String?
-    var height: Int
-    var width: Int
+    var height: Int?
+    var width: Int?
     var textColor1: String?
     var textColor2: String?
     var textColor3: String?
     var textColor4: String?
-    var url: URL
+    var url: String
 }
 
 struct AppleMusicPreview: Decodable {
@@ -240,8 +257,16 @@ struct AppleMusicPreview: Decodable {
 }
 
 struct AppleMusicEditorialNotes: Decodable {
-    var short: String
-    var standard: String
+    var short: String?
+    var standard: String?
+}
+
+struct AppleMusicPlayParams: Decodable {
+    var id: String
+    var kind: String
+    var catalogId: String?
+    var globalId: String?
+    var isLibrary: Bool?
 }
 
 

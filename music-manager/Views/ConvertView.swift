@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import PromiseKit
 
 struct ConvertView: View {
     enum ConversionState {
@@ -55,12 +56,12 @@ struct ConvertView: View {
         }.onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
             self.state = .notStarted
             self.clipboardString = UIPasteboard.general.string
-            self.checkURL()
+            self.getTrackInOtherService()
         }
         .onAppear {
             self.state = .notStarted
             self.clipboardString = UIPasteboard.general.string
-            self.checkURL()
+            self.getTrackInOtherService()
         }
     }
     
@@ -86,11 +87,7 @@ struct ConvertView: View {
                 }) {
                     Text("Search in \(serviceNames[self.targetServiceType!]!)")
                 }.sheet(isPresented: self.$showSearchModal) {
-                    if self.targetServiceType! == .AppleMusic {
-                        SearchView(searchTerm: self.clipboardTrack!.name, manager: AppleMusicManager.shared)
-                    } else {
-                        SearchView(searchTerm: self.clipboardTrack!.name, manager: SpotifyManager.shared)
-                    }
+                    SearchView(searchTerm: self.clipboardTrack!.name, service: self.targetServiceType!)
                 }
             }
         }
@@ -116,77 +113,80 @@ struct ConvertView: View {
         }
     }
     
-    func checkURL() {
+    func getTrackInOtherService() {
         
         if clipboardString != nil, let url = URL(string: clipboardString!) {
             if url.host == "open.spotify.com" {
                 self.targetServiceType = .AppleMusic
                 if url.pathComponents[1] == "track" {
-                    SpotifyManager.shared.getIsrcID(id: url.lastPathComponent, completion: { track in
+                    firstly {
+                        SpotifyManager.shared.fetchIsrcId(id: url.lastPathComponent)
+                    }
+                    .then { (track: Track) -> Promise<[Track]> in
                         self.clipboardTrack = track
-                        if track.isrcID != nil {
-                            AppleMusicManager.shared.getTracksFromIsrcID(isrcs: [track.isrcID!], completion: { tracks in
-                                if !tracks.isEmpty {
-                                    if tracks[0].url != nil {
-                                        self.targetTrack = tracks[0]
-                                        self.state = .trackAvailable
-                                    } else {
-                                        self.state = .trackNotAvailable
-                                    }
-                                } else {
-                                    AppleMusicManager.shared.getSearchResults(for: self.clipboardTrack!.name) { tracks in
-                                        for track in tracks {
-                                            if track.name == self.clipboardTrack!.name && track.artists[0] == self.clipboardTrack!.artists[0] {
-                                                self.targetTrack = tracks[0]
-                                                self.state = .trackAvailable
-                                                return
-                                            }
-                                        }
-                                        self.state = .trackNotAvailable
-                                    }
-                                    
+                        return AppleMusicManager.shared.fetchTracksFromIsrcIds(isrcIds:[track.isrcID!])
+                    }
+                    .then { (tracks: [Track]) -> Promise<[Track]> in
+                        if tracks.isEmpty {
+                            return AppleMusicManager.shared.fetchTrackSearchResults(for: self.clipboardTrack!.name)
+                        }
+                        self.targetTrack = tracks[0]
+                        self.state = .trackAvailable
+                        return Promise{$0.fulfill([])}
+                    }
+                    .done { (tracks: [Track]) in
+                        if self.state != .trackAvailable {
+                            for track in tracks {
+                                if track.name == self.clipboardTrack!.name && track.artists[0] == self.clipboardTrack!.artists[0] {
+                                    self.targetTrack = tracks[0]
+                                    self.state = .trackAvailable
+                                    return
                                 }
-                            })
-                        } else {
+                            }
                             self.state = .trackNotAvailable
                         }
-                    })
+                    }.catch { error in
+                        print(error)
+                        self.state = .trackNotAvailable
+                    }
                 }
             } else if url.host == "music.apple.com" {
                 self.targetServiceType = .Spotify
                 let components = URLComponents(url: url, resolvingAgainstBaseURL: true)
                 if url.pathComponents[2] == "album" {
                     if let id = components?.queryItems?.first(where: { $0.name == "i"})?.value {
-                        print(id)
-                        AppleMusicManager.shared.getIsrcID(id: id, completion: { track in
+                        
+                        firstly {
+                            AppleMusicManager.shared.fetchIsrcId(id: id)
+                        }
+                        .then { (track: Track) -> Promise<[Track]> in
                             self.clipboardTrack = track
-                            if track.isrcID != nil {
-                                SpotifyManager.shared.getTracksFromIsrcID(isrcs: [track.isrcID!], completion: { tracks in
-                                    if !tracks.isEmpty {
-                                        if tracks[0].url != nil {
-                                            self.targetTrack = tracks[0]
-                                            self.state = .trackAvailable
-                                        } else {
-                                            self.state = .trackNotAvailable
-                                        }
-                                    } else {
-                                        SpotifyManager.shared.getSearchResults(for: self.clipboardTrack!.name) { tracks in
-                                            for track in tracks {
-                                                if track.name == self.clipboardTrack!.name && track.artists[0] == self.clipboardTrack!.artists[0] {
-                                                    self.targetTrack = tracks[0]
-                                                    self.state = .trackAvailable
-                                                    return
-                                                }
-                                            }
-                                            self.state = .trackNotAvailable
-                                        }
-                                        
+                            return SpotifyManager.shared.fetchTrackFromIsrcId(isrc: track.isrcID!)
+                        }
+                        .then { (tracks: [Track]) -> Promise<[Track]> in
+                            if tracks.isEmpty {
+                                return SpotifyManager.shared.fetchTrackSearchResults(for: self.clipboardTrack!.name)
+                            }
+                            self.targetTrack = tracks[0]
+                            self.state = .trackAvailable
+                            return Promise{$0.fulfill([])}
+                        }
+                        .done { (tracks: [Track]) in
+                            if self.state != .trackAvailable {
+                                for track in tracks {
+                                    if track.name == self.clipboardTrack!.name && track.artists[0] == self.clipboardTrack!.artists[0] {
+                                        self.targetTrack = tracks[0]
+                                        self.state = .trackAvailable
+                                        return
                                     }
-                                })
-                            } else {
+                                }
                                 self.state = .trackNotAvailable
                             }
-                        })
+                        }
+                        .catch { error in
+                            print(error)
+                            self.state = .trackNotAvailable
+                        }
                     }
                 }
             } else {
@@ -214,13 +214,8 @@ struct ConvertTrackView: View {
     var body: some View {
         VStack {
             if track.imageURL != nil {
-                AsyncImage(url: track.imageURL!, placeholder: VStack {
-                    Image(systemName: "ellipsis")
-                    Text("Loading")
-                    }, configuration: {
-                        $0.resizable()
-                    }).cornerRadius(5)
-                    .frame(minWidth: 100, idealWidth: 300, maxWidth: 300, minHeight: 100, idealHeight: 300, maxHeight: 300, alignment: .center).padding(20)
+                ImageView(url: track.imageURL!, normalSize: false)
+                    .padding(20)
                 
             } else {
                 VStack {

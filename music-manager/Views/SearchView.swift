@@ -7,20 +7,19 @@
 //
 
 import SwiftUI
+import PromiseKit
 
-struct SearchView<ServiceManager: Manager>: View {
+struct SearchView: View {
     @Environment(\.presentationMode) var presentationMode
     @State var searchTerm: String = ""
     @State private var results = [Track]()
-    var manager: ServiceManager
+    var service: ServiceType
     
     var body: some View {
         NavigationView {
             VStack {
                 TextField("Enter search terms...", text: $searchTerm, onCommit: {
-                    self.manager.getSearchResults(for: self.searchTerm) { tracks in
-                        self.results = tracks
-                    }
+                    self.getSearchResults()
                 }).textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding()
                 
@@ -37,9 +36,7 @@ struct SearchView<ServiceManager: Manager>: View {
                 }
             }.onAppear {
                 if self.searchTerm != "" {
-                    self.manager.getSearchResults(for: self.searchTerm) { tracks in
-                        self.results = tracks
-                    }
+                    self.getSearchResults()
                 }
             }
             .navigationBarTitle("Search")
@@ -50,10 +47,34 @@ struct SearchView<ServiceManager: Manager>: View {
                 })
         }
     }
+    
+    func getSearchResults() {
+        if self.service == .Spotify {
+            firstly {
+                SpotifyManager.shared.fetchTrackSearchResults(for: self.searchTerm)
+            }
+            .done { tracks in
+                self.results = tracks
+            }
+            .catch { error in
+                print(error)
+            }
+        } else {
+            firstly {
+                AppleMusicManager.shared.fetchTrackSearchResults(for: self.searchTerm)
+            }
+            .done { tracks in
+                self.results = tracks
+            }
+            .catch { error in
+                print(error)
+            }
+        }
+    }
 }
 
 struct SearchView_Previews: PreviewProvider {
     static var previews: some View {
-        SearchView(manager: SpotifyManager.shared)
+        SearchView(service: .Spotify)
     }
 }

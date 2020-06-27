@@ -7,11 +7,11 @@
 //
 
 import SwiftUI
+import PromiseKit
 
-struct TrackListView<ServiceManager: Manager>: View {
-    var serviceType: ServiceType
+struct TrackListView: View {
+    var service: ServiceType
     @ObservedObject var playlist: Playlist
-    var manager: ServiceManager
     @State private var imagesFinishedLoading = false
     @State private var finishedTransfer = false
     
@@ -33,16 +33,37 @@ struct TrackListView<ServiceManager: Manager>: View {
                 })
                 .onAppear {
                     if self.playlist.tracks.isEmpty {
-                        self.manager.getPlaylistTracks(id: self.playlist.id, completion: { tracks in
-                            self.playlist.tracks = tracks
-                        })
+                        if self.service == .AppleMusic {
+                            firstly {
+                                AppleMusicManager.shared.fetchCatalogIdsFromPlaylist(id: self.playlist.id)
+                            }
+                            .then { ids in
+                                AppleMusicManager.shared.fetchCatalogTracksFromIds(ids: ids)
+                            }
+                            .done { tracks in
+                                self.playlist.tracks = tracks
+                            }
+                            .catch { error in
+                                print(error)
+                            }
+                        } else {
+                            firstly {
+                                SpotifyManager.shared.fetchPlaylistTracks(id: self.playlist.id)
+                            }
+                            .done { tracks in
+                                self.playlist.tracks = tracks
+                            }
+                            .catch { error in
+                                print(error)
+                            }
+                        }
                         
                     }
             }
         }
     }
     func transferPlaylist() {
-        if self.serviceType == .Spotify {
+        if self.service == .Spotify {
             AppleMusicManager.shared.transferPlaylistToAppleMusic(name: self.playlist.name, with: self.playlist.tracks, completion: {
                 self.finishedTransfer = true
             })
@@ -67,7 +88,7 @@ struct TrackView: View {
     var body: some View {
         HStack {
             if track.imageURL != nil {
-                AsyncImage(url: track.imageURL!, cache: self.cache, placeholder: Image(systemName: "ellipsis"), configuration: { $0.resizable() }).frame(width: 75, height: 75).cornerRadius(4)
+                ImageView(url: track.imageURL!)
             } else {
                 Image(systemName: "camera").frame(width: 75, height: 75)
             }

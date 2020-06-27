@@ -53,14 +53,14 @@ struct SpotifySimpleAlbum: Decodable {
     var artists: [SpotifySimpleArtist]
     var availableMarkets: [String]
     var externalUrls: SpotifyExternalUrl
-    var href: URL
-    var id: String
+    var href: URL?
+    var id: String?
     var images: [SpotifyImage]
     var name: String
-    var releaseDate: String
-    var releaseDatePrecision: String
+    var releaseDate: String?
+    var releaseDatePrecision: String?
     var type: String
-    var uri: String
+    var uri: String?
     
     private enum CodingKeys : String, CodingKey {
         case albumType = "album_type",
@@ -104,11 +104,11 @@ struct SpotifyArtist: Decodable {
 
 struct SpotifySimpleArtist: Decodable {
     var externalUrls: SpotifyExternalUrl
-    var href: URL
-    var id: String
+    var href: URL?
+    var id: String?
     var name: String
     var type: String
-    var uri: String
+    var uri: String?
     
     private enum CodingKeys : String, CodingKey {
         case externalUrls = "external_urls",
@@ -204,7 +204,7 @@ struct SpotifyTrack: Decodable {
     var explicit: Bool
     var externalIds: SpotifyExternalId?
     var externalUrls: SpotifyExternalUrl
-    var href: URL
+    var href: URL?
     var id: String?
     var name: String
     var popularity: Int

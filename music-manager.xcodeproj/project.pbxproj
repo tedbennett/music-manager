@@ -29,6 +29,7 @@
 		9FAAAEF6249BC58D0083C1D7 /* AddServiceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FAAAEF5249BC58D0083C1D7 /* AddServiceView.swift */; };
 		9FAAAEF8249BC5CD0083C1D7 /* PlaylistsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FAAAEF7249BC5CD0083C1D7 /* PlaylistsView.swift */; };
 		9FAAAEFA249BC6360083C1D7 /* SpotifyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FAAAEF9249BC6360083C1D7 /* SpotifyManager.swift */; };
+		9FBEDAC724A7621400470DEE /* ImageLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FBEDAC624A7621400470DEE /* ImageLoader.swift */; };
 		9FC96157249D00A600FC823D /* AppleMusicManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FC96156249D00A600FC823D /* AppleMusicManager.swift */; };
 		9FE8FEA0249BF36C00381953 /* TrackListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FE8FE9F249BF36C00381953 /* TrackListView.swift */; };
 /* End PBXBuildFile section */
@@ -55,6 +56,7 @@
 		9FAAAEF5249BC58D0083C1D7 /* AddServiceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddServiceView.swift; sourceTree = "<group>"; };
 		9FAAAEF7249BC5CD0083C1D7 /* PlaylistsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistsView.swift; sourceTree = "<group>"; };
 		9FAAAEF9249BC6360083C1D7 /* SpotifyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyManager.swift; sourceTree = "<group>"; };
+		9FBEDAC624A7621400470DEE /* ImageLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageLoader.swift; sourceTree = "<group>"; };
 		9FC96156249D00A600FC823D /* AppleMusicManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleMusicManager.swift; sourceTree = "<group>"; };
 		9FE8FE9F249BF36C00381953 /* TrackListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackListView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -126,6 +128,7 @@
 		9FAAAEE0249BC5570083C1D7 /* music-manager */ = {
 			isa = PBXGroup;
 			children = (
+				9FBEDAC624A7621400470DEE /* ImageLoader.swift */,
 				9F615EA024A50F1F00F21344 /* Views */,
 				9F615E9A24A50E5300F21344 /* KeyChainWrapper */,
 				9F615E9F24A50EFB00F21344 /* Managers */,
@@ -240,6 +243,7 @@
 				9FAAAEF6249BC58D0083C1D7 /* AddServiceView.swift in Sources */,
 				9FAAAEE2249BC5570083C1D7 /* AppDelegate.swift in Sources */,
 				9F3048C524A618E800134E1E /* SpotifyObjects.swift in Sources */,
+				9FBEDAC724A7621400470DEE /* ImageLoader.swift in Sources */,
 				9FAAAEE4249BC5570083C1D7 /* SceneDelegate.swift in Sources */,
 				9FAA4B2624A2378C00B1124F /* ConvertView.swift in Sources */,
 				9F615E9C24A50E7200F21344 /* KeychainWrapper.swift in Sources */,

@@ -11,7 +11,7 @@ import StoreKit
 import Alamofire
 import PromiseKit
 
-class AppleMusicManager: Manager {
+class AppleMusicManager {
     static var type: ServiceType = .AppleMusic
 
     var baseURL = "https://api.music.apple.com/v1/"
@@ -37,7 +37,6 @@ class AppleMusicManager: Manager {
                                 KeychainWrapper.standard.set(userToken!, forKey: "appleMusicUserToken")
                                 self.getUserStorefront()
                             }
-                            
                         }
                     }
                 }
@@ -48,7 +47,7 @@ class AppleMusicManager: Manager {
     func getUserStorefront() {
         guard let url = URL(string: baseURL + "me/storefront") else { return }
         var request = URLRequest(url: url)
-        request.setValue("Bearer " + developerToken, forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(developerToken)", forHTTPHeaderField: "Authorization")
         request.setValue(userToken!, forHTTPHeaderField: "Music-User-Token")
         
         
@@ -67,40 +66,180 @@ class AppleMusicManager: Manager {
     }
     
     
-    func getUserPlaylists(completion: @escaping ([Playlist]) -> Void) {
-        print(SKCloudServiceController.authorizationStatus())
-        if userToken == nil || SKCloudServiceController.authorizationStatus() != .authorized {
-            return
-        }
-        guard let url = URL(string: baseURL + "me/library/playlists") else { return }
-        var request = URLRequest(url: url)
-        request.setValue("Bearer " + developerToken, forHTTPHeaderField: "Authorization")
-        request.setValue(userToken!, forHTTPHeaderField: "Music-User-Token")
-        
-        
-        URLSession.shared.dataTask(with: request) { (data, urlResponse, error) in
-            var playlists = [Playlist]()
-            
-            if let data = data,
-                let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                for case let result in json["data"] as! [[String: Any]] {
-                    if let playlist = try? Playlist(fromAppleMusic: result) {
-                        playlists.append(playlist)
-                        
+    
+    
+    
+    func fetchLibraryPlaylists() -> Promise<[Playlist]> {
+        return Promise { seal in
+            let headers: HTTPHeaders = [
+                "Authorization": "Bearer \(developerToken)",
+                "Music-User-Token": userToken!
+            ]
+            AF.request(baseURL + "me/library/playlists", headers: headers)
+                .validate()
+                .response { response in
+                    switch response.result {
+                        case .success(let data):
+                            do {
+                                let decoded = try JSONDecoder().decode(AppleMusicResponse<AppleMusicLibraryPlaylist>.self, from: data!)
+                                seal.fulfill(decoded.data.map { Playlist(fromAppleMusicLibrary: $0 )})
+                            } catch {
+                                seal.reject(error)
+                            }
+                            
+                        case .failure(let error):
+                            seal.reject(error)
                     }
-                }
             }
-            DispatchQueue.main.async {
-                completion(playlists)
+        }
+    }
+    
+    func fetchCatalogIdsFromPlaylist(id: String) -> Promise<[String]> {
+        return Promise { seal in
+            let headers: HTTPHeaders = [
+                "Authorization": "Bearer \(developerToken)",
+                "Music-User-Token": userToken!
+            ]
+            AF.request(baseURL + "me/library/playlists/\(id)/tracks", headers: headers)
+                .validate()
+                .response { response in
+                    switch response.result {
+                        case .success(let data):
+                            do {
+                                let decoded = try JSONDecoder().decode(AppleMusicResponse<AppleMusicLibrarySong>.self, from: data!)
+                                seal.fulfill(decoded.data.map { $0.attributes?.playParams?.catalogId as! String })
+                            } catch {
+                                seal.reject(error)
+                        }
+                        
+                        case .failure(let error):
+                            seal.reject(error)
+                    }
             }
-        }.resume()
+        }
+    }
+    
+    func fetchCatalogTracksFromIds(ids: [String]) -> Promise<[Track]> {
+        return Promise { seal in
+            let headers: HTTPHeaders = [
+                "Authorization": "Bearer \(developerToken)",
+                "Music-User-Token": userToken!
+            ]
+            let parameters = [
+                "ids": ids.joined(separator: ","),
+                "include": "artists"
+            ]
+            AF.request(baseURL + "catalog/\(storefront!)/songs", parameters: parameters, headers: headers)
+                .validate()
+                .response { response in
+                    switch response.result {
+                        case .success(let data):
+                            do {
+                                let decoded = try JSONDecoder().decode(AppleMusicResponse<AppleMusicSong>.self, from: data!)
+                                seal.fulfill(decoded.data.map { Track(fromAppleMusic: $0) })
+                            } catch {
+                                seal.reject(error)
+                        }
+                        
+                        case .failure(let error):
+                            seal.reject(error)
+                    }
+            }
+        }
+    }
+    
+    func fetchIsrcId(id: String) -> Promise<Track> {
+        return Promise { seal in
+            let headers: HTTPHeaders = [
+                "Authorization": "Bearer \(developerToken)",
+                "Music-User-Token": userToken!
+            ]
+            AF.request(baseURL + "catalog/\(storefront!)/songs/\(id)", headers: headers)
+                .validate()
+                .response { response in
+                    switch response.result {
+                        case .success(let data):
+                            do {
+                                
+                                let decoded = try JSONDecoder().decode(AppleMusicResponse<AppleMusicSong>.self, from: data!)
+                                seal.fulfill(Track(fromAppleMusic: decoded.data[0]))
+                            } catch {
+                                seal.reject(error)
+                        }
+                        
+                        case .failure(let error):
+                            seal.reject(error)
+                    }
+            }
+        }
+    }
+    
+    func fetchTracksFromIsrcIds(isrcIds: [String]) -> Promise<[Track]> {
+        return Promise { seal in
+            let headers: HTTPHeaders = [
+                "Authorization": "Bearer \(developerToken)",
+                "Music-User-Token": userToken!
+            ]
+            let parameters = ["filter[isrc]": isrcIds.joined(separator: ",")]
+            
+            AF.request(baseURL + "catalog/\(storefront ?? "us")/songs", parameters: parameters, headers: headers)
+                .validate()
+                .response { response in
+                    switch response.result {
+                        case .success(let data):
+                            do {
+                                let decoded = try JSONDecoder().decode(AppleMusicResponse<AppleMusicSong>.self, from: data!)
+                                seal.fulfill(decoded.data.map { Track(fromAppleMusic: $0) })
+                            } catch {
+                                seal.reject(error)
+                        }
+                        
+                        case .failure(let error):
+                            seal.reject(error)
+                    }
+            }
+        }
+    }
+    
+    func fetchTrackSearchResults(for search: String) -> Promise<[Track]> {
+        return Promise { seal in
+            let headers: HTTPHeaders = [
+                "Authorization": "Bearer \(developerToken)",
+                "Music-User-Token": userToken!
+            ]
+            
+            let escapedString = search.replacingOccurrences(of: " ", with: "+")
+            let parameters = [
+                "term": escapedString,
+                "types": "songs",
+                "limit": "5",
+                "include": "artists"
+            ]
+            
+            AF.request(baseURL + "catalog/\(storefront ?? "us")/search", parameters: parameters, headers: headers)
+                .validate()
+                .response { response in
+                    switch response.result {
+                        case .success(let data):
+                            do {
+                                let decoded = try JSONDecoder().decode(AppleMusicSearchResponse.self, from: data!)
+                                seal.fulfill((decoded.results.songs?.data.map { Track(fromAppleMusic: $0) })!)
+                            } catch {
+                                seal.reject(error)
+                        }
+                        
+                        case .failure(let error):
+                            seal.reject(error)
+                    }
+            }
+        }
     }
     
     func getPlaylistTracks(id: String, completion: @escaping ([Track]) -> ()) {
         if userToken == nil || SKCloudServiceController.authorizationStatus() != .authorized {
             return
         }
-        let url = URL(string: baseURL + "me/library/playlists/" + id + "/tracks")
+        let url = URL(string: baseURL + "me/library/playlists/\(id)/tracks")
         
         
         var request = URLRequest(url: url!)
@@ -370,5 +509,81 @@ extension Track {
         
         self.init(serviceId: id, name: name, url: url, local: false, artists: [artist], album: album, imageURL: imageURL, isrcID: isrc)
         
+    }
+}
+
+extension Playlist {
+    convenience init(fromAppleMusicLibrary playlist: AppleMusicLibraryPlaylist) {
+        let id = playlist.id
+        let name = playlist.attributes?.name
+        let description = playlist.attributes?.description?.standard
+        var imageURL: URL?
+        if let artwork = playlist.attributes?.artwork {
+            let imageURLString = artwork.url.replacingOccurrences(of: "{w}", with: String(artwork.width ?? 640))
+                                           .replacingOccurrences(of: "{h}", with: String(artwork.height ?? 640))
+            imageURL = URL(string: imageURLString)
+        }
+        self.init(id: id,
+                  name: name!,
+                  description: description,
+                  imageURL: imageURL)
+    }
+}
+
+        
+        
+extension Track {
+    convenience init(fromAppleMusic track: AppleMusicSong) {
+        let id = track.id
+        let name = track.attributes?.name
+        let url = track.attributes?.url
+        //var artists = (track.relationships?.artists?.data.map { $0.attributes?.name ?? nil })
+        let artists = [track.attributes!.artistName]
+        let album = track.attributes?.albumName
+        let isrc = track.attributes?.isrc
+        var imageURL: URL?
+        if let artwork = track.attributes?.artwork {
+            let imageURLString = artwork.url.replacingOccurrences(of: "{w}", with: String(640))
+                .replacingOccurrences(of: "{h}", with: String(640))
+            imageURL = URL(string: imageURLString)
+        }
+        
+        
+        
+        
+        self.init(serviceId: id,
+                  name: name!,
+                  url: url,
+                  local: false,
+                  artists: artists,
+                  album: album!,
+                  imageURL: imageURL,
+                  isrcID: isrc)
+    }
+    
+    convenience init(fromAppleMusicLibrary track: AppleMusicLibrarySong) {
+        let id = track.id
+        let name = track.attributes?.name
+        let url = track.href
+        let artists = track.relationships?.artists?.data.map { $0.attributes!.name }
+        let album = track.attributes?.albumName
+        var imageURL: URL?
+        if let artwork = track.attributes?.artwork {
+            let imageURLString = artwork.url.replacingOccurrences(of: "{w}", with: String(640))
+                .replacingOccurrences(of: "{h}", with: String(640))
+            imageURL = URL(string: imageURLString)
+        }
+        
+        
+        
+        
+        self.init(serviceId: id,
+                  name: name!,
+                  url: url,
+                  local: false,
+                  artists: artists!,
+                  album: album!,
+                  imageURL: imageURL,
+                  isrcID: nil)
     }
 }

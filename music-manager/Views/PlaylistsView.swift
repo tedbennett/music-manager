@@ -7,23 +7,25 @@
 //
 
 import SwiftUI
+import PromiseKit
 
-struct PlaylistsView<ServiceManager: Manager>: View {
+struct PlaylistsView: View {
     @Environment(\.imageCache) var cache: ImageCache
     
-    var manager: ServiceManager
     @State var playlists = [Playlist]()
-    var serviceType: ServiceType
+    var service: ServiceType
     
     var body: some View {
         NavigationView {
             List(self.playlists) { playlist in
-                NavigationLink(destination: TrackListView<ServiceManager>(serviceType: self.serviceType, playlist: playlist, manager: self.manager)) {
+                NavigationLink(destination: TrackListView(service: self.service, playlist: playlist)) {
                     HStack {
+                        
                         if playlist.imageURL != nil {
-                            AsyncImage(url: playlist.imageURL!, cache: self.cache, placeholder: Image(systemName: "ellipsis"), configuration: {
-                                $0.resizable()
-                            }).frame(width: 75, height: 75).cornerRadius(4)
+                            ImageView(url: playlist.imageURL!)
+//                            AsyncImage(url: playlist.imageURL!, cache: self.cache, placeholder: Image(systemName: "ellipsis"), configuration: {
+//                                $0.resizable()
+//                            }).frame(width: 75, height: 75).cornerRadius(4)
                         } else {
                             Image(systemName: "camera").frame(width: 75, height: 75)
                         }
@@ -32,11 +34,30 @@ struct PlaylistsView<ServiceManager: Manager>: View {
                 }
                 
             }.navigationBarTitle("Playlists")
+                .navigationBarItems(trailing: Image(uiImage: UIImage(systemName:"camera")!))
                 .onAppear {
                     if self.playlists.isEmpty {
-                        self.manager.getUserPlaylists(completion: { playlists in
-                            self.playlists = playlists
-                        })
+                        if self.service == .AppleMusic {
+                            firstly {
+                                AppleMusicManager.shared.fetchLibraryPlaylists()
+                            }
+                            .done { playlists in
+                                self.playlists = playlists
+                            }
+                            .catch { error in
+                                print(error)
+                            }
+                        } else {
+                            firstly {
+                                SpotifyManager.shared.fetchUserPlaylists()
+                            }
+                            .done { playlists in
+                                self.playlists = playlists
+                            }
+                            .catch { error in
+                                print(error)
+                            }
+                        }
                     }
             }
         }
@@ -48,4 +69,3 @@ struct PlaylistsView<ServiceManager: Manager>: View {
 //        PlaylistsView()
 //    }
 //}
-

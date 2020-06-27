@@ -8,14 +8,17 @@
 
 import Foundation
 import UIKit
+import PromiseKit
 
 protocol Manager {
-    func getUserPlaylists(completion: @escaping ([Playlist]) -> ())
+    func fetchUserPlaylists() -> Promise<Data?>
+    func decodeUserPlaylists(data: Data) -> [Playlist]
     func getPlaylistTracks(id: String, completion: @escaping ([Track]) -> ())
     func getIsrcID(id: String, completion: @escaping (Track) -> ())
     func getTracksFromIsrcID(isrcs: [String], completion: @escaping ([Track]) -> ())
     func getSearchResults(for search: String, completion: @escaping ([Track]) -> ())
     static var type: ServiceType {get}
+    
 }
 
 enum ServiceType {
@@ -35,10 +38,11 @@ class Playlist: ObservableObject, Identifiable {
     var name: String
     var imageURL: URL?
     var url: URL?
-    var description: String
+    var description: String?
     @Published var tracks: [Track]
     
-    init(id: String, name: String, description: String, url: URL? = nil, imageURL: URL? = nil,
+    
+    init(id: String, name: String, description: String?, url: URL? = nil, imageURL: URL? = nil,
          tracks: [Track] = []) {
         self.id = id
         self.name = name
@@ -58,7 +62,6 @@ class Track: ObservableObject, Identifiable {
     var imageURL: URL?
     var isrcID: String?
     var url: URL?
-    @Published var image: UIImage?
     
     init(serviceId: String, name: String, url: URL? = nil, local: Bool, artists: [String], album: String, imageURL: URL?, isrcID: String? = nil) {
         self.serviceId = serviceId

@@ -14,13 +14,13 @@ struct ContentView: View {
     var body: some View {
         TabView {
             if spotifyConnected {
-                PlaylistsView<SpotifyManager>(manager: SpotifyManager.shared, serviceType: .Spotify).tabItem {
+                PlaylistsView(service: .Spotify).tabItem {
                     Text("Spotify")
                     Image(uiImage: UIImage(named: "spotify")!)
                 }
             }
             if appleMusicConnected {
-                PlaylistsView<AppleMusicManager>(manager: AppleMusicManager.shared, serviceType: .AppleMusic).tabItem {
+                PlaylistsView(service: .AppleMusic).tabItem {
                     Text("Apple")
                     Image(uiImage: UIImage(named: "apple")!)
                 }
