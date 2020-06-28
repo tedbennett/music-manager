@@ -25,9 +25,6 @@ struct ConvertView: View {
     
     @State private var targetServiceType: ServiceType?
     
-    //var spotifyManager = SpotifyManager.shared
-    //var appleMusicManager = AppleMusicManager.shared
-    
     var body: some View {
         VStack {
             if state == .notStarted {
@@ -47,10 +44,8 @@ struct ConvertView: View {
                         TrackDetails()
                     }
                 } else {
-                    
-                        TrackImage()
-                        TrackDetails()
-                    
+                    TrackImage()
+                    TrackDetails()
                 }
             }
         }.onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
@@ -223,8 +218,6 @@ struct ConvertTrackView: View {
                     Text("Unable to find cover art")
                 }
             }
-            
-            
         }
     }
 }

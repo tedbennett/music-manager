@@ -29,7 +29,10 @@ struct PlaylistsView: View {
                         } else {
                             Image(systemName: "camera").frame(width: 75, height: 75)
                         }
+                        VStack {
                         Text(playlist.name).font(.headline).lineLimit(2)
+                        Text(playlist.id).font(.subheadline)
+                        }
                     }
                 }
                 

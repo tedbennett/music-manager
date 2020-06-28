@@ -64,9 +64,10 @@ struct TrackListView: View {
     }
     func transferPlaylist() {
         if self.service == .Spotify {
-            AppleMusicManager.shared.transferPlaylistToAppleMusic(name: self.playlist.name, with: self.playlist.tracks, completion: {
-                self.finishedTransfer = true
-            })
+            //AppleMusicManager.shared.transferPlaylistToAppleMusic(name: playlist.name, with: playlist.tracks, completion: {})
+            let isrcIds = playlist.tracks.filter { $0.isrcID != nil }
+                .map { $0.isrcID! }
+            AppleMusicManager.shared.createLibraryPlaylist(name: playlist.name, ids: isrcIds)
         }
     }
 }

@@ -15,6 +15,7 @@ class SpotifyManager {
     static var type: ServiceType = .Spotify
     
     var baseURL = URL(string: "https://api.spotify.com/v1")!
+    var userId: String? = KeychainWrapper.standard.string(forKey: "spotifyUserId")
     
     var authClient = OAuth2CodeGrant(settings: [
         "client_id": "e164f018712e4c6ba906a595591ff010",
@@ -33,9 +34,10 @@ class SpotifyManager {
     private init() {}
     
     func authorize(completion: @escaping (Bool) -> Void) {
-        
+        self.authClient.forgetTokens()
         authClient.authorize(callback: {authParameters, error in
             if authParameters != nil {
+                self.fetchUserId()
                 completion(true)
             }
             else {
@@ -49,6 +51,29 @@ class SpotifyManager {
             
         })
         
+    }
+    
+    private func fetchUserId() {
+        let url = baseURL.appendingPathExtension("/me")
+        let headers: HTTPHeaders = [
+            "Authorization": "Bearer \(authClient.accessToken!)"
+        ]
+        AF.request(url, headers: headers)
+            .validate()
+            .response { response in
+                switch response.result {
+                    case .success(let data):
+                        do {
+                            let decoded = try JSONDecoder().decode(SpotifyUserPrivate.self, from: data!)
+                            self.userId = decoded.id
+                        } catch {
+                            print(error)
+                    }
+                    
+                    case .failure(let error):
+                        print(error)
+                }
+        }
     }
     
     func fetchUserPlaylists() -> Promise<[Playlist]> {
@@ -68,7 +93,7 @@ class SpotifyManager {
     }
     
     private func fetchUserPlaylists(url: URL, headers: HTTPHeaders, parameters: Parameters, playlists: [Playlist]) -> Promise<[Playlist]> {
-        return fetchPlaylistsFromPage(url: url, headers: headers, parameters: parameters)
+        return fetchPaginatedData(url: url, headers: headers, parameters: parameters)
             .then { (response: SpotifyPagingObject<SpotifyPlaylist>) -> Promise<[Playlist]> in
                 var newPlaylists = playlists
                 newPlaylists.append(contentsOf: response.items.map { Playlist(spotifyResponse: $0)})
@@ -80,62 +105,21 @@ class SpotifyManager {
         }
     }
     
-    private func fetchPlaylistsFromPage(url: URL, headers: HTTPHeaders, parameters: Parameters) -> Promise<SpotifyPagingObject<SpotifyPlaylist>> {
-        return Promise { seal in
-            AF.request(url, parameters: parameters, headers: headers)
-                .validate()
-                .response { response in
-                    switch response.result {
-                        case .success(let data):
-                            do {
-                                let decoded = try JSONDecoder().decode(SpotifyPagingObject<SpotifyPlaylist>.self, from: data!)
-                                seal.fulfill(decoded)
-                                
-                            } catch {
-                                seal.reject(error)
-                        }
-                        
-                        case .failure(let error):
-                            seal.reject(error)
-                    }
-            }
-        }
-    }
-    
-//    func fetchUserPlaylists() -> Promise<[Playlist]> {
-//        return Promise { seal in
-//            let headers: HTTPHeaders = [
-//                "Authorization": "Bearer \(authClient.accessToken!)"
-//            ]
-//            let parameters = [
-//                "limit": "50"
-//            ]
-//            AF.request(baseURL.appendingPathComponent("me/playlists"), parameters: parameters, headers: headers)
-//                .validate()
-//                .response { response in
-//                    switch response.result {
-//                        case .success(let data):
-//                            do {
-//                                let decoded = try JSONDecoder().decode(SpotifyPagingObject<SpotifyPlaylist>.self, from: data!)
-//                                seal.fulfill(decoded.items.map { Playlist(spotifyResponse: $0 )})
-//                            } catch {
-//                                seal.reject(error)
-//                        }
-//
-//                        case .failure(let error):
-//                            seal.reject(error)
-//                    }
-//            }
-//        }
-//    }
-    
     func fetchPlaylistTracks(id: String) -> Promise<[Track]> {
         let (url, headers) = getPlaylistTracksUrl(id: id)
         return fetchPlaylistTracks(url: url, headers: headers, tracks: [])
     }
     
+    private func getPlaylistTracksUrl(id: String) -> (url: URL, headers: HTTPHeaders) {
+        let headers: HTTPHeaders = [
+            "Authorization": "Bearer \(authClient.accessToken!)"
+        ]
+        let url = baseURL.appendingPathComponent("playlists/\(id)/tracks")
+        return (url: url, headers: headers)
+    }
+    
     private func fetchPlaylistTracks(url: URL, headers: HTTPHeaders, tracks: [Track]) -> Promise<[Track]> {
-        return fetchTracksFromPlaylistPage(url: url, headers: headers)
+        return fetchPaginatedData(url: url, headers: headers)
             .then { (response: SpotifyPagingObject<SpotifyPlaylistTrack>) -> Promise<[Track]> in
                 var newTracks = tracks
                 newTracks.append(contentsOf: response.items.map { Track(spotifyResponse: $0)})
@@ -147,23 +131,15 @@ class SpotifyManager {
         }
     }
     
-    private func getPlaylistTracksUrl(id: String) -> (url: URL, headers: HTTPHeaders) {
-        let headers: HTTPHeaders = [
-            "Authorization": "Bearer \(authClient.accessToken!)"
-        ]
-        let url = baseURL.appendingPathComponent("playlists/\(id)/tracks")
-        return (url: url, headers: headers)
-    }
-    
-    private func fetchTracksFromPlaylistPage(url: URL, headers: HTTPHeaders) -> Promise<SpotifyPagingObject<SpotifyPlaylistTrack>> {
+    private func fetchPaginatedData<SpotifyObject>(url: URL, headers: HTTPHeaders, parameters: Parameters = [:]) -> Promise<SpotifyPagingObject<SpotifyObject>> {
         return Promise { seal in
-            AF.request(url, headers: headers)
+            AF.request(url, parameters: parameters, headers: headers)
                 .validate()
                 .response { response in
                     switch response.result {
                         case .success(let data):
                             do {
-                                let decoded = try JSONDecoder().decode(SpotifyPagingObject<SpotifyPlaylistTrack>.self, from: data!)
+                                let decoded = try JSONDecoder().decode(SpotifyPagingObject<SpotifyObject>.self, from: data!)
                                 seal.fulfill(decoded)
                             } catch {
                                 seal.reject(error)
@@ -175,34 +151,7 @@ class SpotifyManager {
             }
         }
     }
-    
-    
-    
-    
-    //    func fetchPlaylistTracks(id: String) -> Promise<[Track]> {
-    //        return Promise { seal in
-    //            let headers: HTTPHeaders = [
-    //                "Authorization": "Bearer \(authClient.accessToken!)"
-    //            ]
-    //            AF.request(baseURL.appendingPathComponent("playlists/\(id)/tracks"), headers: headers)
-    //                .validate()
-    //                .response { response in
-    //                    switch response.result {
-    //                        case .success(let data):
-    //                            do {
-    //                                let decoded = try JSONDecoder().decode(SpotifyPagingObject<SpotifyPlaylistTrack>.self, from: data!)
-    //                                seal.fulfill(decoded.items.map { Track(spotifyResponse: $0)})
-    //                            } catch {
-    //                                seal.reject(error)
-    //                        }
-    //
-    //                        case .failure(let error):
-    //                            seal.reject(error)
-    //                    }
-    //            }
-    //        }
-    //    }
-    
+
     func fetchIsrcId(id: String) -> Promise<Track> {
         return Promise { seal in
             let headers: HTTPHeaders = [
@@ -256,6 +205,18 @@ class SpotifyManager {
         }
     }
     
+    func fetchTracksFromIsrcIds(isrcIds: [String]) -> Promise<[Track]> {
+        return Promise { $0.fulfill(isrcIds) }.thenMap { (id: String) in
+            self.fetchTrackFromIsrcId(isrc: id)
+        }.then { (tracks: [[Track]]) -> Promise<[Track]> in
+            var result = [Track]()
+            for track in tracks {
+                result.append(contentsOf: track)
+            }
+            return Promise { $0.fulfill(result)}
+        }
+    }
+    
     func fetchTrackSearchResults(for search: String) -> Promise<[Track]> {
         return Promise { seal in
             let headers: HTTPHeaders = [
@@ -287,142 +248,22 @@ class SpotifyManager {
         }
     }
     
-    
-    func getUserPlaylists(completion: @escaping ([Playlist]) -> ()) {
-        let url = baseURL.appendingPathComponent("me/playlists")
-        
-        let request = authClient.request(forURL: url)
-        
-        self.loader = OAuth2DataLoader(oauth2: authClient)
-        loader.perform(request: request) { response in
-            do {
-                let playlistsResponse = try JSONDecoder().decode(SpotifyPagingObject<SpotifyPlaylist>.self, from: response.data!)
-                DispatchQueue.main.async {
-                    
-                    let playlists : [Playlist] = playlistsResponse.items.map {
-                        Playlist(spotifyResponse: $0)
-                    }
-                    
-                    completion(playlists)
-                }
-            }
-            catch let error {
-                DispatchQueue.main.async {
-                    print(error)
-                    // an error occurred
-                }
-            }
-        }
-    }
-    
-    func getPlaylistTracks(id: String, completion: @escaping ([Track]) -> ()) {
-        let url = baseURL.appendingPathComponent("playlists/\(id)/tracks")
-        
-        let request = authClient.request(forURL: url)
-        
-        self.loader = OAuth2DataLoader(oauth2: authClient)
-        loader.perform(request: request) { response in
-            do {
-                let tracksResponse = try JSONDecoder().decode(SpotifyPagingObject<SpotifyPlaylistTrack>.self, from: response.data!)
-                DispatchQueue.main.async {
-                    
-                    let tracks : [Track] = tracksResponse.items.map {
-                        Track(spotifyResponse: $0)
-                    }
-                    completion(tracks)
-                }
-            }
-            catch let error {
-                DispatchQueue.main.async {
-                    print(error)
-                }
-            }
-        }
-    }
-    
-    func getIsrcID(id: String, completion: @escaping (Track) -> ()) {
-        let url = baseURL.appendingPathComponent("tracks/\(id)")
-        
-        let request = authClient.request(forURL: url)
-        
-        self.loader = OAuth2DataLoader(oauth2: authClient)
-        loader.perform(request: request) { response in
-            do {
-                let trackResponse = try JSONDecoder().decode(SpotifyTrack.self, from: response.data!)
-                DispatchQueue.main.async {
-                    completion(Track(spotifyResponse: trackResponse, isLocal: false))
-                }
-            }
-            catch let error {
-                DispatchQueue.main.async {
-                    print(error)
-                    // an error occurred
-                }
-            }
-        }
-    }
-    
-    func getTracksFromIsrcID(isrcs: [String], completion: @escaping (([Track]) -> ())) {
-        for isrc in isrcs {
-            let url = baseURL.appendingPathComponent("search")
-            var urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: true)!
-            urlComponents.queryItems = [URLQueryItem(name: "q", value: "isrc:\(isrc)"), URLQueryItem(name: "type", value: "track"), URLQueryItem(name: "limit", value: "1")]
-            
-            let request = authClient.request(forURL: urlComponents.url!)
-            
-            self.loader = OAuth2DataLoader(oauth2: authClient)
-            loader.perform(request: request) { response in
-                do {
-                    let searchResponse = try JSONDecoder().decode(SpotifySearch.self, from: response.data!)
-                    DispatchQueue.main.async {
-                        
-                        let tracks : [Track] = searchResponse.tracks!.items.map {
-                            Track(spotifyResponse: $0, isLocal: false)
-                        }
-                        completion(tracks)
-                    }
-                }
-                catch let error {
-                    DispatchQueue.main.async {
-                        print(error)
-                        // an error occurred
-                    }
-                }
-            }
-        }
-    }
-    
-    func getSearchResults(for search: String, completion: @escaping ([Track]) -> ()) {
-        
-        let url = baseURL.appendingPathComponent("search")
-        var urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: true)!
-        urlComponents.queryItems = [URLQueryItem(name: "q", value: search), URLQueryItem(name: "type", value: "track"), URLQueryItem(name: "limit", value: "5")]
-        if urlComponents.url == nil {
-            return
-        }
-        let request = authClient.request(forURL: urlComponents.url!)
-        
-        
-        self.loader = OAuth2DataLoader(oauth2: authClient)
-        loader.perform(request: request) { response in
-            do {
-                let searchResponse = try JSONDecoder().decode(SpotifySearch.self, from: response.data!)
-                DispatchQueue.main.async {
-                    
-                    let tracks : [Track] = searchResponse.tracks!.items.map {
-                        Track(spotifyResponse: $0, isLocal: false)
-                    }
-                    completion(tracks)
-                }
-            }
-            catch let error {
-                DispatchQueue.main.async {
-                    print(error)
-                    // an error occurred
-                }
-            }
-        }
-    }
+//    func createLibraryPlaylist(name: String, ids: [String]) {
+//        let (url, headers, body) = createLibraryPlaylistUrl(name: name)
+//        when(fulfilled: createLibraryPlaylist(url: url, headers: headers, body: body), fetchTracksFromIsrcIds(isrcIds: ids))
+//            .then { (playlistId: String, tracks: [Track]) -> Promise<Void> in
+//                self.addTracksToLibraryPlaylist(id: playlistId, trackIds: tracks.map { $0.serviceId })
+//        }
+//        .catch { error in
+//            print(error)
+//        }
+//    }
+//
+//    private func createLibraryPlaylistUrl() {
+//        if userId == nil {
+//            fetchUserId
+//        }
+//    }
 }
 
 extension Playlist {

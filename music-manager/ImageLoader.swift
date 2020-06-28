@@ -9,6 +9,7 @@
 import Foundation
 import SwiftUI
 import Combine
+import Alamofire
 
 
 struct ImageView: View {
@@ -68,10 +69,12 @@ struct ImageView: View {
         init(imageURL: URL) {
             URLSession.shared.dataTask(with: imageURL) { (data, response, error) in
                 guard let data = data else { return }
-                
+
                 DispatchQueue.main.async { self.data = data }
-                
+
             }.resume()
+            
+            
         }
     }
     
